@@ -2,8 +2,8 @@ package pedalea
 
 type BikeData struct {
 	Available bool
-	Latitude  bool
-	Longitude bool
+	Latitude  float64
+	Longitude float64
 }
 
 type Bike struct {
