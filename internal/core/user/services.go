@@ -26,7 +26,6 @@ type Crypto interface {
 
 type Auth interface {
 	GenerateJwtToken(params map[string]any) (string, error)
-	GetTokenClaims(tokenString string) (map[string]any, error)
 }
 
 func NewService(userRepo UserRepo, crypto Crypto, auth Auth) *Service {
@@ -46,20 +45,9 @@ func (s *Service) InsertUser(data pedalea.InsertUser) error {
 	return err
 }
 
-// TODO: Review validations for sub
 // TODO: This does not allow partial updates, that sucks
-func (s *Service) UpdateUser(tokenString string, data pedalea.UserData) error {
-	claim, err := s.auth.GetTokenClaims(tokenString)
-	if err != nil {
-		return err
-	}
-
-	id := int(claim["sub"].(float64))
-	if id == 0 {
-		return pedalea.ErrInvalidJwtSubject
-	}
-
-	return s.userRepo.UpdateUser(id, data)
+func (s *Service) UpdateUser(ID int, data pedalea.UserData) error {
+	return s.userRepo.UpdateUser(ID, data)
 }
 
 func (s *Service) Login(data pedalea.LoginUser) (string, error) {
@@ -86,18 +74,8 @@ func (s *Service) Login(data pedalea.LoginUser) (string, error) {
 	return token, nil
 }
 
-func (s *Service) GetUserData(tokenString string) (*pedalea.UserData, error) {
-	claim, err := s.auth.GetTokenClaims(tokenString)
-	if err != nil {
-		return nil, err
-	}
-
-	id := int(claim["sub"].(float64))
-	if id == 0 {
-		return nil, pedalea.ErrInvalidJwtSubject
-	}
-
-	user, err := s.userRepo.GetUserByID(id)
+func (s *Service) GetUserData(ID int) (*pedalea.UserData, error) {
+	user, err := s.userRepo.GetUserByID(ID)
 	if err != nil {
 		return nil, err
 	}

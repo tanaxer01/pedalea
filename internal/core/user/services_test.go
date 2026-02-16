@@ -48,11 +48,6 @@ func (m *MockAuth) GenerateJwtToken(params map[string]any) (string, error) {
 	return args.String(0), args.Error(1)
 }
 
-func (m *MockAuth) GetTokenClaims(tokenString string) (map[string]any, error) {
-	args := m.Called(tokenString)
-	return args.Get(0).(map[string]any), args.Error(1)
-}
-
 func TestInsertExistingUser(t *testing.T) {
 	repo := new(MockUserRepo)
 	crypto := new(MockCrypto)
