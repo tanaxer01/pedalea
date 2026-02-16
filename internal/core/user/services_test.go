@@ -72,7 +72,21 @@ func TestInsertExistingUser(t *testing.T) {
 	crypto.AssertExpectations(t)
 }
 
-// TestLoginNonexistingUser()
+func TestLoginWithNonExistingUser(t *testing.T) {
+	repo := new(MockUserRepo)
+
+	repo.On("GetUserByEmail", mock.Anything).Return(nil, pedalea.ErrUserNotFound)
+
+	s := NewService(repo, nil, nil)
+
+	token, err := s.Login(pedalea.LoginUser{
+		Email:    "test@test.com",
+		Password: "test-password",
+	})
+
+	require.ErrorIs(t, err, pedalea.ErrUserNotFound)
+	require.Empty(t, token)
+}
 
 func TestLoginWrongPassword(t *testing.T) {
 	repo := new(MockUserRepo)
@@ -96,7 +110,5 @@ func TestLoginWrongPassword(t *testing.T) {
 	crypto.AssertExpectations(t)
 	auth.AssertExpectations(t)
 }
-
-// func TestGetUserWithInvalidJwt(t *testing.T) {}
 
 // func TestGetUserWithMissingUser(t *testing.T) {}

@@ -20,7 +20,6 @@ func NewServer(addr string, userHandler *UserHandler) *Server {
 	})
 
 	s.registerUserRoutes(mux, userHandler)
-	// TODO: Add handlers
 
 	s.httpServer = &http.Server{Addr: addr, Handler: mux}
 
