@@ -1,7 +1,6 @@
 package http
 
 import (
-	"errors"
 	"net/http"
 	"strconv"
 
@@ -50,7 +49,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, errors.New("AAA"))
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
 		return
 	}
 
@@ -72,7 +71,7 @@ func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, errors.New("AAA"))
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
 		return
 	}
 

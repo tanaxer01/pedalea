@@ -111,4 +111,17 @@ func TestLoginWrongPassword(t *testing.T) {
 	auth.AssertExpectations(t)
 }
 
-// func TestGetUserWithMissingUser(t *testing.T) {}
+func TestGetNonExistingUser(t *testing.T) {
+	repo := new(MockUserRepo)
+
+	repo.On("GetUserByID", mock.Anything).Return(nil, pedalea.ErrUserNotFound)
+
+	s := NewService(repo, nil, nil)
+
+	user, err := s.GetUserData(1)
+
+	require.ErrorIs(t, err, pedalea.ErrUserNotFound)
+	require.Empty(t, user)
+
+	repo.AssertExpectations(t)
+}
