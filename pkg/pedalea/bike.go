@@ -7,8 +7,8 @@ type BikeData struct {
 }
 
 type Bike struct {
-	ID       int
-	CreateAt string
-	UpdateAt string
+	ID        int
+	CreatedAt string
+	UpdatedAt string
 	BikeData
 }
