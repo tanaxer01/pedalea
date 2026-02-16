@@ -1,7 +1,9 @@
 package http
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 
 	"github.com/tanaxer01/pedalea/internal/core/user"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
@@ -46,12 +48,19 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
-	id, ok := r.Context().Value("UserID").(int)
+	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		// TODO
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, errors.New("AAA"))
+		return
 	}
 
-	userData, err := h.service.GetUserData(id)
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	userData, err := h.service.GetUserData(intId)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
@@ -61,9 +70,16 @@ func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, ok := r.Context().Value("UserID").(int)
+	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		// TODO
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, errors.New("AAA"))
+		return
+	}
+
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.UserData](r.Body)
@@ -72,7 +88,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.service.UpdateUser(id, input)
+	err = h.service.UpdateUser(intId, input)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
 	}

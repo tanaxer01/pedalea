@@ -1,8 +1,10 @@
 package user
 
 import (
+	"strconv"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
@@ -25,7 +27,7 @@ type Crypto interface {
 }
 
 type Auth interface {
-	GenerateJwtToken(params map[string]any) (string, error)
+	GenerateJwtToken(claims pedalea.UserClaim) (string, error)
 }
 
 func NewService(userRepo UserRepo, crypto Crypto, auth Auth) *Service {
@@ -62,12 +64,14 @@ func (s *Service) Login(data pedalea.LoginUser) (string, error) {
 		return "", err
 	}
 
-	token, err := s.auth.GenerateJwtToken(map[string]any{
-		"sub":       user.ID,
-		"email":     user.Email,
-		"firstName": user.FirstName,
-		"lastName":  user.LastName,
-		"exp":       time.Now().Add(time.Hour * 24 * 30).Unix(),
+	token, err := s.auth.GenerateJwtToken(pedalea.UserClaim{
+		RegisteredClaims: jwt.RegisteredClaims{
+			Subject:   strconv.Itoa(user.ID),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 30)),
+		},
+		Email:     user.Email,
+		FirstName: user.FirstName,
+		LastName:  user.LastName,
 	})
 	if err != nil {
 		return "", err

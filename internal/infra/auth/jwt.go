@@ -13,9 +13,7 @@ func NewAuth(secretKey string) *Auth {
 	return &Auth{SecretKey: secretKey}
 }
 
-func (a *Auth) GenerateJwtToken(params map[string]any) (string, error) {
-	claims := jwt.MapClaims(params)
-
+func (a *Auth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
@@ -44,7 +42,3 @@ func (a *Auth) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) 
 
 	return claims, nil
 }
-
-// func (s *Service) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) {
-// 		return s.auth.ValidateJwtToken(tokenString)
-// }

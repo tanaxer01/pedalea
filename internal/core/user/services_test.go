@@ -43,8 +43,8 @@ func (m *MockCrypto) ValidatePassword(hashedPassword, password string) error {
 	return args.Error(1)
 }
 
-func (m *MockAuth) GenerateJwtToken(params map[string]any) (string, error) {
-	args := m.Called(params)
+func (m *MockAuth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
+	args := m.Called(claims)
 	return args.String(0), args.Error(1)
 }
 

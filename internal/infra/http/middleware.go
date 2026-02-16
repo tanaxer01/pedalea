@@ -2,11 +2,11 @@ package http
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/tanaxer01/pedalea/internal/infra/auth"
+	"github.com/tanaxer01/pedalea/pkg/pedalea"
 	"github.com/tanaxer01/pedalea/pkg/utils"
 )
 
@@ -22,15 +22,15 @@ func (m JwtMiddleware) JwtValidationMiddleware(next http.HandlerFunc) http.Handl
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, errors.New("A"))
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidToken)
 			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
-		token = strings.TrimPrefix(authHeader, "bearer ")
+		token = strings.TrimPrefix(token, "bearer ")
 
 		if token == "" {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, errors.New("Invalid token format"))
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidToken)
 			return
 		}
 
