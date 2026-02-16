@@ -22,7 +22,9 @@ func main() {
 	userService := user.NewService(userRepo, &crypto.Crypto{}, jwtAuth)
 	userHandler := http.NewUserHandler(userService)
 
-	server := http.NewServer(":8080", userHandler)
+	jwtMiddleware := http.NewJwtMiddleware(jwtAuth)
+
+	server := http.NewServer(":8080", userHandler, &jwtMiddleware)
 	defer server.Close()
 
 	err = server.Start()

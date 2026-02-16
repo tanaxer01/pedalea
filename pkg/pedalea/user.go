@@ -1,19 +1,21 @@
 package pedalea
 
+import "github.com/golang-jwt/jwt/v5"
+
 type UserData struct {
-	Email     string `json:"email" validation:"required,email"`
-	FirstName string `json:"first_name" validation:"required"`
-	LastName  string `json:"last_name" validation:"required"`
+	Email     string `json:"email" validate:"required,email"`
+	FirstName string `json:"first_name" validate:"required"`
+	LastName  string `json:"last_name" validate:"required"`
 }
 
 type InsertUser struct {
-	Password string `json:"password" validation:"required"`
+	Password string `json:"password" validate:"required"`
 	UserData
 }
 
 type LoginUser struct {
-	Email    string `json:"email" validation:"required,email"`
-	Password string `json:"password" validation:"required"`
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
 }
 
 type User struct {
@@ -22,4 +24,11 @@ type User struct {
 	UpdatedAt      string
 	HashedPassword string
 	UserData
+}
+
+type UserClaim struct {
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	jwt.RegisteredClaims
 }

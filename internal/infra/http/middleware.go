@@ -1,10 +1,54 @@
 package http
 
-import "net/http"
+import (
+	"context"
+	"errors"
+	"net/http"
+	"strings"
 
-func JwtValidationMiddleware(next http.Handler) http.Handler {
+	"github.com/tanaxer01/pedalea/internal/infra/auth"
+	"github.com/tanaxer01/pedalea/pkg/utils"
+)
+
+type JwtMiddleware struct {
+	auth *auth.Auth
+}
+
+func NewJwtMiddleware(auth *auth.Auth) JwtMiddleware {
+	return JwtMiddleware{auth: auth}
+}
+
+func (m JwtMiddleware) JwtValidationMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Implement JWT middleware logic here
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, errors.New("A"))
+			return
+		}
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
+		token = strings.TrimPrefix(authHeader, "bearer ")
+
+		if token == "" {
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, errors.New("Invalid token format"))
+			return
+		}
+
+		claim, err := m.auth.ValidateJwtToken(token)
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
+			return
+		}
+
+		subject, err := claim.GetSubject()
+		if err != nil {
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
+			return
+		}
+
+		ctx := context.WithValue(r.Context(), "UserID", subject)
+		r = r.WithContext(ctx)
+
 		next.ServeHTTP(w, r)
 	})
 }

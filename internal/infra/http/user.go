@@ -1,7 +1,6 @@
 package http
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/tanaxer01/pedalea/internal/core/user"
@@ -21,6 +20,7 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	input, err := utils.ValidateBody[pedalea.InsertUser](r.Body)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		return
 	}
 
 	err = h.service.InsertUser(input)
@@ -32,23 +32,21 @@ func (h *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	input, err := utils.ValidateBody[pedalea.LoginUser](r.Body)
 	if err != nil {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"error": err.Error(),
-		})
+		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		return
 	}
 
 	token, err := h.service.Login(input)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	utils.WriteResponse(w, token)
 }
 
 func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
-	// TODO: Add claim data to the request context
-	id, ok := r.Context().Value("sub").(int)
+	id, ok := r.Context().Value("UserID").(int)
 	if !ok {
 		// TODO
 	}
@@ -56,13 +54,14 @@ func (h *UserHandler) GetUserData(w http.ResponseWriter, r *http.Request) {
 	userData, err := h.service.GetUserData(id)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		return
 	}
 
 	utils.WriteResponse(w, userData)
 }
 
 func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	id, ok := r.Context().Value("sub").(int)
+	id, ok := r.Context().Value("UserID").(int)
 	if !ok {
 		// TODO
 	}
@@ -70,6 +69,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	input, err := utils.ValidateBody[pedalea.UserData](r.Body)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		return
 	}
 
 	err = h.service.UpdateUser(id, input)

@@ -69,8 +69,8 @@ func (r *UserRepository) GetUserByID(ID int) (*pedalea.User, error) {
 	var user pedalea.User
 
 	err := r.db.
-		QueryRow("SELECT id, email, first_name, last_name, created_at, updated_at FROM users WHERE id = ?", ID).
-		Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.CreatedAt, &user.UpdatedAt)
+		QueryRow("SELECT id, email, first_name, last_name, hashed_password, created_at, updated_at FROM users WHERE id = ?", ID).
+		Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.HashedPassword, &user.CreatedAt, &user.UpdatedAt)
 
 	if err != nil {
 		return nil, err
@@ -83,8 +83,12 @@ func (r *UserRepository) GetUserByEmail(email string) (*pedalea.User, error) {
 	var user pedalea.User
 
 	err := r.db.
-		QueryRow("SELECT id, email, first_name, last_name, created_at, updated_at FROM users WHERE email = ?", email).
-		Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.CreatedAt, &user.UpdatedAt)
+		QueryRow("SELECT id, email, first_name, last_name, hashed_password, created_at, updated_at FROM users WHERE email = ?", email).
+		Scan(&user.ID, &user.Email, &user.FirstName, &user.LastName, &user.HashedPassword, &user.CreatedAt, &user.UpdatedAt)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, pedalea.ErrUserNotFound
+	}
 
 	if err != nil {
 		return nil, err

@@ -10,7 +10,7 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, userHandler *UserHandler) *Server {
+func NewServer(addr string, userHandler *UserHandler, jwtMiddleware *JwtMiddleware) *Server {
 	s := &Server{addr: addr}
 	mux := http.NewServeMux()
 
@@ -19,7 +19,7 @@ func NewServer(addr string, userHandler *UserHandler) *Server {
 		w.Write([]byte("Server is up"))
 	})
 
-	s.registerUserRoutes(mux, userHandler)
+	s.registerUserRoutes(mux, userHandler, jwtMiddleware)
 
 	s.httpServer = &http.Server{Addr: addr, Handler: mux}
 
@@ -36,9 +36,18 @@ func (s *Server) Close() error {
 	return s.httpServer.Close()
 }
 
-func (s *Server) registerUserRoutes(mux *http.ServeMux, handler *UserHandler) {
-	mux.HandleFunc("POST /user/register", handler.Register)
-	mux.HandleFunc("POST /user/login", handler.Login)
-	mux.HandleFunc("GET /user/profile", handler.GetUserData)
-	mux.HandleFunc("PATCH /user/profile", handler.UpdateUser)
+func (s *Server) registerUserRoutes(mux *http.ServeMux, h *UserHandler, m *JwtMiddleware) {
+	mux.HandleFunc("POST /user/register", h.Register)
+	mux.HandleFunc("POST /user/login", h.Login)
+	mux.HandleFunc("GET /user/profile", m.JwtValidationMiddleware(h.GetUserData))
+	mux.HandleFunc("PATCH /user/profile", m.JwtValidationMiddleware(h.UpdateUser))
+}
+
+func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) {
+	// Bikes
+	// Users
+	mux.HandleFunc("GET /admin/users", handler.ListUsers)
+	mux.HandleFunc("GET /admin/users/{user_id}", handler.GetUser)
+	mux.HandleFunc("PATCH /admin/users/{user_id}", handler.UpdateUser)
+
 }

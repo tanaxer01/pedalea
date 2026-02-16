@@ -56,6 +56,8 @@ func (s *Service) Login(data pedalea.LoginUser) (string, error) {
 		return "", err
 	}
 
+	// TODO: Domain error on no cols found
+	// TODO: Wrap in domain error
 	if err := s.crypto.ValidatePassword(user.HashedPassword, data.Password); err != nil {
 		return "", err
 	}

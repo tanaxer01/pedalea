@@ -1,6 +1,9 @@
 package auth
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/tanaxer01/pedalea/pkg/pedalea"
+)
 
 type Auth struct {
 	SecretKey string
@@ -26,15 +29,22 @@ func (a *Auth) GenerateJwtToken(params map[string]any) (string, error) {
 	return tokenString, nil
 }
 
-func (a *Auth) GetTokenClaim(tokenString string) (map[string]any, error) {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (any, error) {
+func (a *Auth) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &pedalea.UserClaim{}, func(token *jwt.Token) (any, error) {
 		return []byte(a.SecretKey), nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	claims := token.Claims.(jwt.MapClaims)
-	return map[string]any(claims), nil
+	claims, ok := token.Claims.(*pedalea.UserClaim)
+	if !ok || !token.Valid {
+		return nil, pedalea.ErrInvalidToken
+	}
+
+	return claims, nil
 }
+
+// func (s *Service) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) {
+// 		return s.auth.ValidateJwtToken(tokenString)
+// }
