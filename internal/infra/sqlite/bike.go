@@ -14,6 +14,14 @@ func NewBikeRepository(db *sql.DB) *BikeRepository {
 	return &BikeRepository{db: db}
 }
 
+func (r *BikeRepository) UpdateBike(bikeID int, data pedalea.BikeData) error {
+	return nil
+}
+
+func (r *BikeRepository) GetBikeByID(bikeID int) (*pedalea.Bike, error) {
+	return nil, nil
+}
+
 func (r *BikeRepository) ListAvailableBikes() ([]pedalea.Bike, error) {
 	var bikes []pedalea.Bike
 

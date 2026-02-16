@@ -9,7 +9,6 @@ import (
 type Service struct {
 	bikeRepo   BikeRepo
 	rentalRepo RentalRepo
-	auth       Auth
 }
 
 type BikeRepo interface {
@@ -24,24 +23,30 @@ type RentalRepo interface {
 	ListOverlappingRentals(userID, bikeID int) ([]pedalea.Rental, error)
 }
 
-type Auth interface {
-	GetTokenClaims(tokenString string) (map[string]any, error)
-}
-
-func NewService(bikeRepo BikeRepo, rentalRepo RentalRepo, auth Auth) *Service {
-	return &Service{bikeRepo: bikeRepo, rentalRepo: rentalRepo, auth: auth}
+func NewService(bikeRepo BikeRepo, rentalRepo RentalRepo) *Service {
+	return &Service{bikeRepo: bikeRepo, rentalRepo: rentalRepo}
 }
 
 func (s *Service) StartRental(ID int, event pedalea.RentalEvent) error {
 	// We ensure users can't start rentals for other users
 	if ID != event.UserID {
-		// return pedalea.ErrUnauthorized
+		return pedalea.ErrInvalidOperation
+	}
+
+	rentals, err := s.rentalRepo.ListOverlappingRentals(event.UserID, event.BikeID)
+	if err != nil {
+		return err
 	}
 
 	// We ensure only valid users & bikes can be used to start a rental
-	_, err := s.rentalRepo.ListOverlappingRentals(event.UserID, event.BikeID)
-	if err != nil {
-		return err
+	for _, rental := range rentals {
+		if rental.UserID == event.UserID {
+			return pedalea.ErrUserAlreadyRented
+		}
+
+		if rental.BikeID == event.BikeID {
+			return pedalea.ErrBikeAlreadyRented
+		}
 	}
 
 	bike, err := s.bikeRepo.GetBikeByID(event.BikeID)
@@ -71,7 +76,7 @@ func (s *Service) StartRental(ID int, event pedalea.RentalEvent) error {
 	return err
 }
 
-func (s *Service) EndRental(ID int) error {
+func (s *Service) EndRental(UserID int) error {
 	// TODO: Having partial updates would make this much easier
 	// err := s.rentalRepo.UpdateRental(id, )
 

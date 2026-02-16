@@ -10,7 +10,7 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, userHandler *UserHandler, jwtMiddleware *JwtMiddleware) *Server {
+func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, jwtMiddleware *JwtMiddleware) *Server {
 	s := &Server{addr: addr}
 	mux := http.NewServeMux()
 
@@ -20,6 +20,7 @@ func NewServer(addr string, userHandler *UserHandler, jwtMiddleware *JwtMiddlewa
 	})
 
 	s.registerUserRoutes(mux, userHandler, jwtMiddleware)
+	s.registerBikeRoutes(mux, bikeHandler, jwtMiddleware)
 
 	s.httpServer = &http.Server{Addr: addr, Handler: mux}
 
@@ -41,6 +42,10 @@ func (s *Server) registerUserRoutes(mux *http.ServeMux, h *UserHandler, m *JwtMi
 	mux.HandleFunc("POST /user/login", h.Login)
 	mux.HandleFunc("GET /user/profile", m.JwtValidationMiddleware(h.GetUserData))
 	mux.HandleFunc("PATCH /user/profile", m.JwtValidationMiddleware(h.UpdateUser))
+}
+
+func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *JwtMiddleware) {
+	mux.HandleFunc("GET /bikes/available", m.JwtValidationMiddleware(h.ListAvailableBikes))
 }
 
 func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) {

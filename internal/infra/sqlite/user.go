@@ -49,6 +49,7 @@ func (r *UserRepository) UpdateUser(ID int, data pedalea.UserData) error {
 		time.Now(),
 		ID,
 	)
+
 	if err != nil {
 		return err
 	}

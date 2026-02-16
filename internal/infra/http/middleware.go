@@ -14,8 +14,8 @@ type JwtMiddleware struct {
 	auth *auth.Auth
 }
 
-func NewJwtMiddleware(auth *auth.Auth) JwtMiddleware {
-	return JwtMiddleware{auth: auth}
+func NewJwtMiddleware(auth *auth.Auth) *JwtMiddleware {
+	return &JwtMiddleware{auth: auth}
 }
 
 func (m JwtMiddleware) JwtValidationMiddleware(next http.HandlerFunc) http.HandlerFunc {
