@@ -13,7 +13,7 @@ type Service struct {
 }
 
 type UserRepo interface {
-	InsertUser(data pedalea.InsertUser) error
+	InsertUser(data *pedalea.InsertUser) error
 	UpdateUser(ID int, data pedalea.UserData) error
 	GetUserByID(ID int) (*pedalea.User, error)
 	GetUserByEmail(email string) (*pedalea.User, error)
@@ -40,7 +40,7 @@ func (s *Service) InsertUser(data pedalea.InsertUser) error {
 	}
 
 	data.Password = hashedPassword
-	err = s.userRepo.InsertUser(data)
+	err = s.userRepo.InsertUser(&data)
 
 	return err
 }

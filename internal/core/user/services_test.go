@@ -14,7 +14,7 @@ type MockCrypto struct{ mock.Mock }
 type MockAuth struct{ mock.Mock }
 
 // TODO: This is awfull, look for a lib for mocking
-func (m *MockUserRepo) InsertUser(data pedalea.InsertUser) error {
+func (m *MockUserRepo) InsertUser(data *pedalea.InsertUser) error {
 	args := m.Called(data)
 	return args.Error(0)
 }
