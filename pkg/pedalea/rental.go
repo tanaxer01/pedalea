@@ -10,6 +10,8 @@ type RentalStatus string
 var (
 	ErrRentalAlreadyExists = errors.New("rental already exists")
 	ErrRentalNotFound      = errors.New("Rental not found")
+
+	ErrRentalInvalidEndCoords = errors.New("End coordinates are outside valid range")
 )
 
 const (
@@ -29,9 +31,13 @@ type RentalData struct {
 	EndLongitude   float64
 }
 
-type RentalEvent struct {
-	UserID int
+type StartRental struct {
 	BikeID int
+}
+
+type EndRental struct {
+	EndLatitude  float64
+	EndLongitude float64
 }
 
 type Rental struct {

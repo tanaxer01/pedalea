@@ -16,7 +16,7 @@ func NewRentalRepository(db *sqlx.DB) *RentalRepository {
 }
 
 func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
-	_, err := r.db.NamedExec(`INSERT INTO rentals (user_id, bike_id, start_time, start_latitude, start_longitude) VALUES (:user_id, :bike_id, :start_time, :start_latitude, :start_longitude)`, data)
+	_, err := r.db.NamedExec(`INSERT INTO rentals (user_id, bike_id, start_latitude, start_longitude) VALUES (:user_id, :bike_id, :start_latitude, :start_longitude)`, data)
 
 	if isDuplicated(err) {
 		return err
@@ -61,6 +61,19 @@ func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
 func (r *RentalRepository) GetRentalByID(ID int) (*pedalea.Rental, error) {
 	rental := pedalea.Rental{}
 	err := r.db.Get(&rental, "SELECT  id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE id = $1", ID)
+
+	if isNotFound(err) {
+		return nil, pedalea.ErrRentalNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &rental, nil
+}
+
+func (r *RentalRepository) GetRentalByUserID(ID int) (*pedalea.Rental, error) {
+	rental := pedalea.Rental{}
+	err := r.db.Get(&rental, "SELECT  id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE user_id = $1 AND status = 'running'", ID)
 
 	if isNotFound(err) {
 		return nil, pedalea.ErrRentalNotFound

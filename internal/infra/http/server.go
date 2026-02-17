@@ -51,10 +51,16 @@ func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *JwtMi
 }
 
 func (s *Server) registerRentalRoutes(mux *http.ServeMux, h *RentalHandler, m *JwtMiddleware) {
+	mux.HandleFunc("GET /rentals/start", m.JwtValidationMiddleware(h.StartRental))
+	mux.HandleFunc("GET /rentals/end", m.JwtValidationMiddleware(h.EndRental))
+	mux.HandleFunc("GET /rentals/history", m.JwtValidationMiddleware(h.ListUserRentals))
+
 }
 
 func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) {
 	// Bikes
+	mux.HandleFunc("POST /admin/bikes", handler.InsertBike)
+	mux.HandleFunc("PATCH /admin/bikes", handler.UpdateBike)
 	mux.HandleFunc("GET /admin/bikes", handler.ListBikes)
 
 	// Users
@@ -62,4 +68,8 @@ func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) 
 	mux.HandleFunc("GET /admin/users/{user_id}", handler.GetUser)
 	mux.HandleFunc("PATCH /admin/users/{user_id}", handler.UpdateUser)
 
+	// Rentals
+	mux.HandleFunc("PATCH /admin/rentals", handler.UpdateRental)
+	mux.HandleFunc("GET /admin/rentals/{rental_id}", handler.GetRental)
+	mux.HandleFunc("GET /admin/rentals", handler.ListRentals)
 }
