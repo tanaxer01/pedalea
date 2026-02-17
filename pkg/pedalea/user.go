@@ -7,8 +7,14 @@ import (
 )
 
 var (
-	ErrUserAlreadyExists = errors.New("user already exists")
-	ErrUserNotFound      = errors.New("User not found")
+	ErrInvalidTokenFormat      = errors.New("invalid token format")
+	ErrInvalidTokenCredentials = errors.New("invalid token credentials")
+
+	ErrUserAlreadyExists  = errors.New("user already exists")
+	ErrUserNotFound       = errors.New("User not found")
+	ErrInvalidJwtSubject  = errors.New("Jwt subject is invalid id")
+	ErrInvalidCredentials = errors.New("Invalid credentials")
+	ErrInvalidOperation   = errors.New("Invalid operation")
 )
 
 type UserData struct {
@@ -28,10 +34,11 @@ type LoginUser struct {
 }
 
 type User struct {
-	ID             int    `db:"id"`
-	CreatedAt      string `db:"created_at"`
-	UpdatedAt      string `db:"updated_at"`
-	HashedPassword string `db:"hashed_password"`
+	ID        int    `db:"id"`
+	CreatedAt string `db:"created_at"`
+	UpdatedAt string `db:"updated_at"`
+	// NOTE: "-" omits the fiedld
+	HashedPassword string `json:"-" db:"hashed_password"`
 	UserData
 }
 

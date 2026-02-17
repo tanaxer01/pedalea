@@ -1,19 +1,23 @@
 package auth
 
 import (
+	"context"
+	"net/http"
+	"strings"
+
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
-type Auth struct {
+type JwtAuth struct {
 	SecretKey string
 }
 
-func NewAuth(secretKey string) *Auth {
-	return &Auth{SecretKey: secretKey}
+func NewJwtAuth(secretKey string) *JwtAuth {
+	return &JwtAuth{SecretKey: secretKey}
 }
 
-func (a *Auth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
+func (a *JwtAuth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
 	token := jwt.NewWithClaims(
 		jwt.SigningMethodHS256,
 		claims,
@@ -27,7 +31,16 @@ func (a *Auth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
 	return tokenString, nil
 }
 
-func (a *Auth) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) {
+func (a *JwtAuth) ValidateToken(request *http.Request, tokenType, tokenString string) (*http.Request, error) {
+	if strings.ToLower(tokenType) != "bearer" {
+		return nil, pedalea.ErrInvalidTokenFormat
+	}
+
+	credentials := strings.Split(tokenString, ":")
+	if len(credentials) != 2 {
+		return nil, pedalea.ErrInvalidTokenFormat
+	}
+
 	token, err := jwt.ParseWithClaims(tokenString, &pedalea.UserClaim{}, func(token *jwt.Token) (any, error) {
 		return []byte(a.SecretKey), nil
 	})
@@ -37,8 +50,16 @@ func (a *Auth) ValidateJwtToken(tokenString string) (*pedalea.UserClaim, error) 
 
 	claims, ok := token.Claims.(*pedalea.UserClaim)
 	if !ok || !token.Valid {
-		return nil, pedalea.ErrInvalidToken
+		return nil, pedalea.ErrInvalidTokenCredentials
 	}
 
-	return claims, nil
+	subject, err := claims.GetSubject()
+	if err != nil {
+		return nil, pedalea.ErrInvalidTokenFormat
+	}
+
+	ctx := context.WithValue(request.Context(), "UserID", subject)
+	request = request.WithContext(ctx)
+
+	return request, nil
 }

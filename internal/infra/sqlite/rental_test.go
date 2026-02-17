@@ -1,7 +1,6 @@
 package sqlite
 
 import (
-	"strconv"
 	"testing"
 
 	"github.com/pressly/goose/v3"
@@ -23,7 +22,7 @@ func TestRentalFlow(t *testing.T) {
 	err = goose.Up(db.DB, "../../../migrations")
 	require.Nil(t, err)
 
-	authRepo := auth.NewAuth("secret-key")
+	authRepo := auth.NewJwtAuth("secret-key")
 
 	userRepo := NewUserRepository(db)
 	userService := user.NewService(userRepo, &crypto.Crypto{}, authRepo)
@@ -48,27 +47,20 @@ func TestRentalFlow(t *testing.T) {
 	})
 	require.Nil(t, err)
 
-	token, err := userService.Login(pedalea.LoginUser{
+	_, err = userService.Login(pedalea.LoginUser{
 		Email:    "test@test.com",
 		Password: "password",
 	})
 	require.Nil(t, err)
 
-	claims, err := authRepo.ValidateJwtToken(token)
+	err = rentalService.StartRental(1, pedalea.StartRental{BikeID: 1})
 	require.Nil(t, err)
 
-	ID, err := strconv.Atoi(claims.Subject)
-	require.Nil(t, err)
-
-	err = rentalService.StartRental(ID, pedalea.StartRental{BikeID: 1})
-	require.Nil(t, err)
-
-	err = rentalService.EndRental(ID, pedalea.EndRental{EndLatitude: 0, EndLongitude: 0})
+	err = rentalService.EndRental(1, pedalea.EndRental{EndLatitude: 0, EndLongitude: 0})
 	require.Nil(t, err)
 
 	rental, err := rentalRepo.GetRentalByID(1)
 	require.Nil(t, err)
-
 	require.Equal(t, pedalea.StatusStopped, rental.Status)
 
 	rentals, err := rentalRepo.ListRentals()

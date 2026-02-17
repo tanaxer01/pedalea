@@ -22,8 +22,11 @@ func main() {
 	bikeRepo := sqlite.NewBikeRepository(db)
 	rentalRepo := sqlite.NewRentalRepository(db)
 
-	jwtAuth := auth.NewAuth("secret")
-	jwtMiddleware := http.NewJwtMiddleware(jwtAuth)
+	jwtAuth := auth.NewJwtAuth("secret")
+	jwtMiddleware := http.NewAuthMiddleware(jwtAuth)
+
+	basicAuth := auth.NewBasicAuth("YWRtaW46cGFzc3dvcmQ=")
+	basicMiddleware := http.NewAuthMiddleware(basicAuth)
 
 	userService := user.NewService(userRepo, &crypto.Crypto{}, jwtAuth)
 	userHandler := http.NewUserHandler(userService)
@@ -37,7 +40,7 @@ func main() {
 	adminService := admin.NewService(userRepo, bikeRepo, rentalRepo)
 	adminHandler := http.NewAdminHandler(adminService)
 
-	server := http.NewServer(":8080", userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware)
+	server := http.NewServer(":8080", userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware, basicMiddleware)
 	defer server.Close()
 
 	err = server.Start()

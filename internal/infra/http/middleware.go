@@ -1,53 +1,44 @@
 package http
 
 import (
-	"context"
 	"net/http"
 	"strings"
 
-	"github.com/tanaxer01/pedalea/internal/infra/auth"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 	"github.com/tanaxer01/pedalea/pkg/utils"
 )
 
-type JwtMiddleware struct {
-	auth *auth.Auth
+type Auth interface {
+	ValidateToken(request *http.Request, tokenType, tokenString string) (*http.Request, error)
 }
 
-func NewJwtMiddleware(auth *auth.Auth) *JwtMiddleware {
-	return &JwtMiddleware{auth: auth}
+type AuthMiddleware struct {
+	auth Auth
 }
 
-func (m JwtMiddleware) JwtValidationMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func NewAuthMiddleware(auth Auth) *AuthMiddleware {
+	return &AuthMiddleware{auth: auth}
+}
+
+func (m *AuthMiddleware) AuthMiddleware(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidToken)
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidTokenCredentials)
 			return
 		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		token = strings.TrimPrefix(token, "bearer ")
-
-		if token == "" {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidToken)
+		tokenParts := strings.Split(authHeader, " ")
+		if len(tokenParts) != 2 {
+			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidTokenFormat)
 			return
 		}
 
-		claim, err := m.auth.ValidateJwtToken(token)
+		r, err := m.auth.ValidateToken(r, tokenParts[0], tokenParts[1])
 		if err != nil {
 			utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
 			return
 		}
-
-		subject, err := claim.GetSubject()
-		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
-			return
-		}
-
-		ctx := context.WithValue(r.Context(), "UserID", subject)
-		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
 	})

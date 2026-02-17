@@ -10,7 +10,7 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *JwtMiddleware) *Server {
+func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *AuthMiddleware, adminMiddleware *AuthMiddleware) *Server {
 	s := &Server{addr: addr}
 	mux := http.NewServeMux()
 
@@ -22,7 +22,7 @@ func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, 
 	s.registerUserRoutes(mux, userHandler, jwtMiddleware)
 	s.registerBikeRoutes(mux, bikeHandler, jwtMiddleware)
 	s.registerRentalRoutes(mux, rentalHandler, jwtMiddleware)
-	s.registerAdminRoutes(mux, adminHandler)
+	s.registerAdminRoutes(mux, adminHandler, adminMiddleware)
 
 	s.httpServer = &http.Server{Addr: addr, Handler: mux}
 
@@ -39,37 +39,37 @@ func (s *Server) Close() error {
 	return s.httpServer.Close()
 }
 
-func (s *Server) registerUserRoutes(mux *http.ServeMux, h *UserHandler, m *JwtMiddleware) {
+func (s *Server) registerUserRoutes(mux *http.ServeMux, h *UserHandler, m *AuthMiddleware) {
 	mux.HandleFunc("POST /user/register", h.Register)
 	mux.HandleFunc("POST /user/login", h.Login)
-	mux.HandleFunc("GET /user/profile", m.JwtValidationMiddleware(h.GetUserData))
-	mux.HandleFunc("PATCH /user/profile", m.JwtValidationMiddleware(h.UpdateUser))
+	mux.HandleFunc("GET /user/profile", m.AuthMiddleware(h.GetUserData))
+	mux.HandleFunc("PATCH /user/profile", m.AuthMiddleware(h.UpdateUser))
 }
 
-func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *JwtMiddleware) {
-	mux.HandleFunc("GET /bikes/available", m.JwtValidationMiddleware(h.ListAvailableBikes))
+func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *AuthMiddleware) {
+	mux.HandleFunc("GET /bikes/available", m.AuthMiddleware(h.ListAvailableBikes))
 }
 
-func (s *Server) registerRentalRoutes(mux *http.ServeMux, h *RentalHandler, m *JwtMiddleware) {
-	mux.HandleFunc("GET /rentals/start", m.JwtValidationMiddleware(h.StartRental))
-	mux.HandleFunc("GET /rentals/end", m.JwtValidationMiddleware(h.EndRental))
-	mux.HandleFunc("GET /rentals/history", m.JwtValidationMiddleware(h.ListUserRentals))
+func (s *Server) registerRentalRoutes(mux *http.ServeMux, h *RentalHandler, m *AuthMiddleware) {
+	mux.HandleFunc("GET /rentals/start", m.AuthMiddleware(h.StartRental))
+	mux.HandleFunc("GET /rentals/end", m.AuthMiddleware(h.EndRental))
+	mux.HandleFunc("GET /rentals/history", m.AuthMiddleware(h.ListUserRentals))
 
 }
 
-func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) {
+func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler, m *AuthMiddleware) {
 	// Bikes
-	mux.HandleFunc("POST /admin/bikes", handler.InsertBike)
-	mux.HandleFunc("PATCH /admin/bikes", handler.UpdateBike)
-	mux.HandleFunc("GET /admin/bikes", handler.ListBikes)
+	mux.HandleFunc("POST /admin/bikes", m.AuthMiddleware(handler.InsertBike))
+	mux.HandleFunc("PATCH /admin/bikes", m.AuthMiddleware(handler.UpdateBike))
+	mux.HandleFunc("GET /admin/bikes", m.AuthMiddleware(handler.ListBikes))
 
 	// Users
-	mux.HandleFunc("GET /admin/users", handler.ListUsers)
-	mux.HandleFunc("GET /admin/users/{user_id}", handler.GetUser)
-	mux.HandleFunc("PATCH /admin/users/{user_id}", handler.UpdateUser)
+	mux.HandleFunc("GET /admin/users", m.AuthMiddleware(handler.ListUsers))
+	mux.HandleFunc("GET /admin/users/{user_id}", m.AuthMiddleware(handler.GetUser))
+	mux.HandleFunc("PATCH /admin/users/{user_id}", m.AuthMiddleware(handler.UpdateUser))
 
 	// Rentals
-	mux.HandleFunc("PATCH /admin/rentals", handler.UpdateRental)
-	mux.HandleFunc("GET /admin/rentals/{rental_id}", handler.GetRental)
-	mux.HandleFunc("GET /admin/rentals", handler.ListRentals)
+	mux.HandleFunc("PATCH /admin/rentals", m.AuthMiddleware(handler.UpdateRental))
+	mux.HandleFunc("GET /admin/rentals/{rental_id}", m.AuthMiddleware(handler.GetRental))
+	mux.HandleFunc("GET /admin/rentals", m.AuthMiddleware(handler.ListRentals))
 }
