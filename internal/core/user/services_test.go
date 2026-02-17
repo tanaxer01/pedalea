@@ -1,56 +1,22 @@
 package user
 
+//go:generate mockery --name=UserRepo --output=./mocks --outpkg=mocks
+//go:generate mockery --name=Crypto --output=./mocks --outpkg=mocks
+//go:generate mockery --name=Auth --output=./mocks --outpkg=mocks
+
 import (
 	"testing"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/tanaxer01/pedalea/internal/core/user/mocks"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
-type MockUserRepo struct{ mock.Mock }
-type MockCrypto struct{ mock.Mock }
-type MockAuth struct{ mock.Mock }
-
-// TODO: This is awfull, look for a lib for mocking
-func (m *MockUserRepo) InsertUser(data *pedalea.InsertUser) error {
-	args := m.Called(data)
-	return args.Error(0)
-}
-func (m *MockUserRepo) UpdateUser(ID int, data pedalea.UserData) error {
-	args := m.Called(ID, data)
-	return args.Error(0)
-}
-func (m *MockUserRepo) GetUserByID(ID int) (*pedalea.User, error) {
-	args := m.Called(ID)
-	user, _ := args.Get(0).(*pedalea.User)
-	return user, args.Error(1)
-}
-func (m *MockUserRepo) GetUserByEmail(email string) (*pedalea.User, error) {
-	args := m.Called(email)
-	user, _ := args.Get(0).(*pedalea.User)
-	return user, args.Error(1)
-}
-
-func (m *MockCrypto) HashPassword(password string) (string, error) {
-	args := m.Called(password)
-	return args.String(0), args.Error(1)
-}
-
-func (m *MockCrypto) ValidatePassword(hashedPassword, password string) error {
-	args := m.Called(hashedPassword, password)
-	return args.Error(1)
-}
-
-func (m *MockAuth) GenerateJwtToken(claims pedalea.UserClaim) (string, error) {
-	args := m.Called(claims)
-	return args.String(0), args.Error(1)
-}
-
 func TestInsertExistingUser(t *testing.T) {
-	repo := new(MockUserRepo)
-	crypto := new(MockCrypto)
+	repo := new(mocks.UserRepo)
+	crypto := new(mocks.Crypto)
 
 	crypto.On("HashPassword", "password").Return("hashed", nil)
 	repo.On("InsertUser", mock.Anything).Return(pedalea.ErrUserAlreadyExists)
@@ -73,9 +39,9 @@ func TestInsertExistingUser(t *testing.T) {
 }
 
 func TestLoginWithNonExistingUser(t *testing.T) {
-	repo := new(MockUserRepo)
+	repo := new(mocks.UserRepo)
 
-	repo.On("GetUserByEmail", mock.Anything).Return(nil, pedalea.ErrUserNotFound)
+	repo.On("GetUserByEmail", mock.Anything).Return((*pedalea.User)(nil), pedalea.ErrUserNotFound)
 
 	s := NewService(repo, nil, nil)
 
@@ -86,17 +52,18 @@ func TestLoginWithNonExistingUser(t *testing.T) {
 
 	require.ErrorIs(t, err, pedalea.ErrUserNotFound)
 	require.Empty(t, token)
+
+	repo.AssertExpectations(t)
 }
 
 func TestLoginWrongPassword(t *testing.T) {
-	repo := new(MockUserRepo)
-	crypto := new(MockCrypto)
-	auth := new(MockAuth)
+	repo := new(mocks.UserRepo)
+	crypto := new(mocks.Crypto)
 
-	repo.On("GetUserByEmail", mock.Anything).Return(&pedalea.User{}, nil)
-	crypto.On("ValidatePassword", mock.Anything, mock.Anything).Return(nil, pedalea.ErrInvalidCredentials)
+	repo.On("GetUserByEmail", mock.Anything).Return(&pedalea.User{HashedPassword: "hashed"}, nil)
+	crypto.On("ValidatePassword", "hashed", "pasword").Return(pedalea.ErrInvalidCredentials)
 
-	s := NewService(repo, crypto, auth)
+	s := NewService(repo, crypto, nil)
 
 	token, err := s.Login(pedalea.LoginUser{
 		Email:    "test@test.com",
@@ -108,13 +75,12 @@ func TestLoginWrongPassword(t *testing.T) {
 
 	repo.AssertExpectations(t)
 	crypto.AssertExpectations(t)
-	auth.AssertExpectations(t)
 }
 
 func TestGetNonExistingUser(t *testing.T) {
-	repo := new(MockUserRepo)
+	repo := new(mocks.UserRepo)
 
-	repo.On("GetUserByID", mock.Anything).Return(nil, pedalea.ErrUserNotFound)
+	repo.On("GetUserByID", mock.Anything).Return((*pedalea.User)(nil), pedalea.ErrUserNotFound)
 
 	s := NewService(repo, nil, nil)
 

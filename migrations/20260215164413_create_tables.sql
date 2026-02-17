@@ -43,4 +43,3 @@ DROP TABLE users;
 DROP TABLE bikes;
 DROP TABLE rentals;
 -- +goose StatementEnd
-

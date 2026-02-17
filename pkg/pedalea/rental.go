@@ -2,7 +2,6 @@ package pedalea
 
 import (
 	"errors"
-	"time"
 )
 
 type RentalStatus string
@@ -10,6 +9,9 @@ type RentalStatus string
 var (
 	ErrRentalAlreadyExists = errors.New("rental already exists")
 	ErrRentalNotFound      = errors.New("Rental not found")
+
+	ErrBikeAlreadyRented = errors.New("Bike is already rented")
+	ErrUserAlreadyRented = errors.New("User already rented a bike")
 
 	ErrRentalInvalidEndCoords = errors.New("End coordinates are outside valid range")
 )
@@ -20,15 +22,15 @@ const (
 )
 
 type RentalData struct {
-	UserID         int
-	BikeID         int
-	Status         RentalStatus
-	StartTime      time.Time
-	EndTime        time.Time
-	StartLatitude  float64
-	StartLongitude float64
-	EndLatitude    float64
-	EndLongitude   float64
+	UserID         int          `json:"user_id" db:"user_id"`
+	BikeID         int          `json:"bike_id" db:"bike_id"`
+	Status         RentalStatus `json:"status" db:"status"`
+	StartTime      int64        `json:"start_time" db:"start_time"`
+	EndTime        *int64       `json:"end_time" db:"end_time"`
+	StartLatitude  float64      `json:"start_latitude" db:"start_latitude"`
+	StartLongitude float64      `json:"start_longitude" db:"start_longitude"`
+	EndLatitude    *float64     `json:"end_latitude" db:"end_latitude"`
+	EndLongitude   *float64     `json:"end_longitude" db:"end_longitude"`
 }
 
 type StartRental struct {

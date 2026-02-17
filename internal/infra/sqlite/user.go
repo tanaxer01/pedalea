@@ -32,7 +32,7 @@ func (r *UserRepository) InsertUser(user *pedalea.InsertUser) error {
 
 func (r *UserRepository) UpdateUser(ID int, data pedalea.UserData) error {
 	res, err := r.db.Exec(
-		`UPDATE  users SET email = COALLECE($1, email), first_name = COALLECE($2, first_name), last_name = COALLECE($3, last_name), updated_at = $4 WHERE id = $5`,
+		`UPDATE  users SET email = COALESCE($1, email), first_name = COALESCE($2, first_name), last_name = COALESCE($3, last_name), updated_at = $4 WHERE id = $5`,
 		data.Email,
 		data.FirstName,
 		data.LastName,

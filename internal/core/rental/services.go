@@ -65,6 +65,7 @@ func (s *Service) StartRental(ID int, event pedalea.StartRental) error {
 	err = s.rentalRepo.InsertRental(pedalea.RentalData{
 		UserID:         ID,
 		BikeID:         event.BikeID,
+		StartTime:      time.Now().Unix(),
 		StartLatitude:  bike.Latitude,
 		StartLongitude: bike.Longitude,
 	})
@@ -107,11 +108,12 @@ func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
 		return err
 	}
 
+	curr_time := time.Now().Unix()
 	err = s.rentalRepo.UpdateRental(rental.ID, pedalea.RentalData{
 		Status:       pedalea.StatusStopped,
-		EndTime:      time.Now(),
-		EndLatitude:  event.EndLatitude,
-		EndLongitude: event.EndLongitude,
+		EndTime:      &curr_time,
+		EndLatitude:  &event.EndLatitude,
+		EndLongitude: &event.EndLongitude,
 	})
 
 	return err

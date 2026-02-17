@@ -16,7 +16,7 @@ func NewRentalRepository(db *sqlx.DB) *RentalRepository {
 }
 
 func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
-	_, err := r.db.NamedExec(`INSERT INTO rentals (user_id, bike_id, start_latitude, start_longitude) VALUES (:user_id, :bike_id, :start_latitude, :start_longitude)`, data)
+	_, err := r.db.NamedExec(`INSERT INTO rentals (user_id, bike_id, start_time, start_latitude, start_longitude) VALUES (:user_id, :bike_id, :start_time, :start_latitude, :start_longitude)`, data)
 
 	if isDuplicated(err) {
 		return err
