@@ -1,8 +1,16 @@
 package pedalea
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type RentalStatus string
+
+var (
+	ErrRentalAlreadyExists = errors.New("rental already exists")
+	ErrRentalNotFound      = errors.New("Rental not found")
+)
 
 const (
 	StatusRunning RentalStatus = "running"

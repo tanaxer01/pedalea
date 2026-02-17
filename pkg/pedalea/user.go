@@ -1,11 +1,20 @@
 package pedalea
 
-import "github.com/golang-jwt/jwt/v5"
+import (
+	"errors"
+
+	"github.com/golang-jwt/jwt/v5"
+)
+
+var (
+	ErrUserAlreadyExists = errors.New("user already exists")
+	ErrUserNotFound      = errors.New("User not found")
+)
 
 type UserData struct {
-	Email     string `json:"email" validate:"required,email"`
-	FirstName string `json:"first_name" validate:"required"`
-	LastName  string `json:"last_name" validate:"required"`
+	Email     string `json:"email" db:"email" validate:"required,email"`
+	FirstName string `json:"first_name" db:"first_name" validate:"required"`
+	LastName  string `json:"last_name" db:"last_name" validate:"required"`
 }
 
 type InsertUser struct {
@@ -19,10 +28,10 @@ type LoginUser struct {
 }
 
 type User struct {
-	ID             int
-	CreatedAt      string
-	UpdatedAt      string
-	HashedPassword string
+	ID             int    `db:"id"`
+	CreatedAt      string `db:"created_at"`
+	UpdatedAt      string `db:"updated_at"`
+	HashedPassword string `db:"hashed_password"`
 	UserData
 }
 

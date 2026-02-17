@@ -1,41 +1,27 @@
 package sqlite
 
 import (
-	"database/sql"
-	"errors"
 	"time"
 
-	"github.com/mattn/go-sqlite3"
+	"github.com/jmoiron/sqlx"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
 type RentalRepository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
-func NewRentalRepository(db *sql.DB) *RentalRepository {
+func NewRentalRepository(db *sqlx.DB) *RentalRepository {
 	return &RentalRepository{db: db}
 }
 
 func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
-	_, err := r.db.Exec(
-		`INSERT INTO rentals (user_id, bike_id, start_time, start_latitude, start_longitude) VALUES (?, ?, ?, ?, ?)`,
-		data.UserID,
-		data.BikeID,
-		data.StartTime,
-		data.StartLatitude,
-		data.StartLongitude,
-	)
+	_, err := r.db.NamedExec(`INSERT INTO rentals (user_id, bike_id, start_time, start_latitude, start_longitude) VALUES (:user_id, :bike_id, :start_time, :start_latitude, :start_longitude)`, data)
 
-	if err == nil {
-		return nil
-	}
-
-	var sqliteErr sqlite3.Error
-	if errors.As(err, &sqliteErr) {
-		if sqliteErr.ExtendedCode == sqlite3.ErrConstraintUnique {
-			return pedalea.ErrRentalAlreadyExists
-		}
+	if isDuplicated(err) {
+		return err
+	} else if err != nil {
+		return err
 	}
 
 	return err
@@ -43,7 +29,7 @@ func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
 
 func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
 	res, err := r.db.Exec(
-		`UPDATE rentals SET status = ?, start_time = ?, end_time = ?, start_latitude = ?, start_longitude = ?, end_latitude = ?, end_longitude = ?, updated_at = ? WHERE id = ?`,
+		`UPDATE rentals SET status = COALESCE($1, status), start_time = COALESCE($2, start_time), end_time = COALESCE($3, end_time), start_latitude = COALESCE($4, start_latitude), start_longitude = COALESCE($5, start_longitude), end_latitude = COALESCE($6, end_latitude), end_longitude = COALESCE($7, end_longitude), updated_at = COALESCE($8, updated_at) WHERE id = $9`,
 		data.Status,
 		data.StartTime,
 		data.EndTime,
@@ -55,6 +41,7 @@ func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
 		ID,
 	)
 
+	// TODO: Same as usr
 	if err != nil {
 		return err
 	}
@@ -71,27 +58,39 @@ func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
 	return err
 }
 
-func (r *RentalRepository) ListRentals(userID int) ([]pedalea.Rental, error) {
-	var rentals []pedalea.Rental
+func (r *RentalRepository) GetRentalByID(ID int) (*pedalea.Rental, error) {
+	rental := pedalea.Rental{}
+	err := r.db.Get(&rental, "SELECT  id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE id = $1", ID)
 
-	rows, err := r.db.Query(
-		"SELECT id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals",
-	)
+	if isNotFound(err) {
+		return nil, pedalea.ErrRentalNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return &rental, nil
+}
+
+func (r *RentalRepository) ListRentals() ([]pedalea.Rental, error) {
+	var rentals []pedalea.Rental
+	err := r.db.Select(&rentals, "SELECT id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals")
+
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var rental pedalea.Rental
-		err = rows.Scan(&rental.ID, &rental.UserID, &rental.BikeID, &rental.Status, &rental.StartTime, &rental.EndTime, &rental.StartLatitude, &rental.StartLongitude, &rental.EndLatitude, &rental.EndLongitude)
-		if err != nil {
-			return nil, err
-		}
-		rentals = append(rentals, rental)
+	if rentals == nil {
+		rentals = []pedalea.Rental{}
 	}
 
-	if err = rows.Err(); err != nil {
+	return rentals, nil
+}
+
+func (r *RentalRepository) ListUserRentals(userID int) ([]pedalea.Rental, error) {
+	var rentals []pedalea.Rental
+	err := r.db.Select(&rentals, "SELECT id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE user_id = $1", userID)
+
+	if err != nil {
 		return nil, err
 	}
 
@@ -104,27 +103,9 @@ func (r *RentalRepository) ListRentals(userID int) ([]pedalea.Rental, error) {
 
 func (r *RentalRepository) ListOverlappingRentals(userID, bikeID int) ([]pedalea.Rental, error) {
 	var rentals []pedalea.Rental
+	err := r.db.Select(&rentals, "SELECT id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE  status = 'running' AND (user_id = $1 OR bike_id = $2)", userID, bikeID)
 
-	rows, err := r.db.Query(
-		"SELECT id, user_id, bike_id, status, start_time, end_time, start_latitude, start_longitude, end_latitude, end_longitude FROM rentals WHERE status = 'running' AND (user_id = ? OR bike_id = ?)",
-		userID,
-		bikeID,
-	)
 	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var rental pedalea.Rental
-		err = rows.Scan(&rental.ID, &rental.UserID, &rental.BikeID, &rental.Status, &rental.StartTime, &rental.EndTime, &rental.StartLatitude, &rental.StartLongitude, &rental.EndLatitude, &rental.EndLongitude)
-		if err != nil {
-			return nil, err
-		}
-		rentals = append(rentals, rental)
-	}
-
-	if err = rows.Err(); err != nil {
 		return nil, err
 	}
 
