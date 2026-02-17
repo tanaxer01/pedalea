@@ -16,7 +16,7 @@ func NewBikeRepository(db *sqlx.DB) *BikeRepository {
 }
 
 func (r *BikeRepository) InsertBike(bike pedalea.BikeData) error {
-	_, err := r.db.NamedExec(`INSERT INTO bikes ( latitude, longitude) VALUES (:latitude, :longitude)`, bike)
+	_, err := r.db.NamedExec(`INSERT INTO bikes (latitude, longitude, price_per_minute) VALUES (:latitude, :longitude, :price_per_minute)`, bike)
 
 	if isDuplicated(err) {
 		return pedalea.ErrBikeAlreadyExists
@@ -29,10 +29,11 @@ func (r *BikeRepository) InsertBike(bike pedalea.BikeData) error {
 
 func (r *BikeRepository) UpdateBike(ID int, data pedalea.BikeData) error {
 	res, err := r.db.Exec(
-		`UPDATE bikes SET is_available = COALESCE($1, is_available), latitude = COALESCE($2, latitude), longitude = COALESCE($3, longitude), updated_at = COALESCE($4, updated_at) WHERE id = $5`,
+		`UPDATE bikes SET is_available = COALESCE($1, is_available), latitude = COALESCE($2, latitude), longitude = COALESCE($3, longitude), price_per_minute = COALESCE($4, price_per_minute), updated_at = COALESCE($5, updated_at) WHERE id = $6`,
 		data.Available,
 		data.Latitude,
 		data.Longitude,
+		data.PricePerMinute,
 		time.Now(),
 		ID,
 	)
@@ -56,7 +57,7 @@ func (r *BikeRepository) UpdateBike(ID int, data pedalea.BikeData) error {
 
 func (r *BikeRepository) GetBikeByID(ID int) (*pedalea.Bike, error) {
 	var bike pedalea.Bike
-	err := r.db.Get(&bike, "SELECT id, is_available, latitude, longitude, created_at, updated_at FROM bikes WHERE id = $1", ID)
+	err := r.db.Get(&bike, "SELECT id, is_available, latitude, longitude, price_per_minute, created_at, updated_at FROM bikes WHERE id = $1", ID)
 
 	if isNotFound(err) {
 		return nil, pedalea.ErrUserNotFound
@@ -69,7 +70,7 @@ func (r *BikeRepository) GetBikeByID(ID int) (*pedalea.Bike, error) {
 
 func (r *BikeRepository) ListAvailableBikes() ([]pedalea.Bike, error) {
 	var bikes []pedalea.Bike
-	err := r.db.Select(&bikes, "SELECT id, is_available, latitude, longitude, created_at, updated_at FROM bikes WHERE is_available = true")
+	err := r.db.Select(&bikes, "SELECT id, is_available, latitude, longitude, price_per_minute, created_at, updated_at FROM bikes WHERE is_available = true")
 
 	if err != nil {
 		return nil, err
@@ -84,7 +85,7 @@ func (r *BikeRepository) ListAvailableBikes() ([]pedalea.Bike, error) {
 
 func (r *BikeRepository) ListBikes() ([]pedalea.Bike, error) {
 	var bikes []pedalea.Bike
-	err := r.db.Select(&bikes, "SELECT id, is_available, latitude, longitude, created_at, updated_at FROM bikes")
+	err := r.db.Select(&bikes, "SELECT id, is_available, latitude, longitude, price_per_minute, created_at, updated_at FROM bikes")
 
 	if err != nil {
 		return nil, err

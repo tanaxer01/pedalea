@@ -79,6 +79,11 @@ func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
 		return err
 	}
 
+	bike, err := s.bikeRepo.GetBikeByID(rental.BikeID)
+	if err != nil {
+		return err
+	}
+
 	// Haversine formula
 	// https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
 	R := 6371. // earth radius in km
@@ -108,12 +113,17 @@ func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
 		return err
 	}
 
+	// Unix time is in seconds
 	curr_time := time.Now().Unix()
+	duration := int(math.Ceil(float64(curr_time-rental.StartTime) / 60.))
+
 	err = s.rentalRepo.UpdateRental(rental.ID, pedalea.RentalData{
 		Status:       pedalea.StatusStopped,
 		EndTime:      &curr_time,
 		EndLatitude:  &event.EndLatitude,
 		EndLongitude: &event.EndLongitude,
+		Duration:     duration,
+		Cost:         duration * bike.PricePerMinute,
 	})
 
 	return err

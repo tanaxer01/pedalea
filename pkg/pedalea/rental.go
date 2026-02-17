@@ -31,20 +31,22 @@ type RentalData struct {
 	StartLongitude float64      `json:"start_longitude" db:"start_longitude"`
 	EndLatitude    *float64     `json:"end_latitude" db:"end_latitude"`
 	EndLongitude   *float64     `json:"end_longitude" db:"end_longitude"`
+	Duration       int          `json:"duration" db:"duration"`
+	Cost           int          `json:"cost" db:"cost"`
 }
 
 type StartRental struct {
-	BikeID int
+	BikeID int `json:"bike_id"`
 }
 
 type EndRental struct {
-	EndLatitude  float64
-	EndLongitude float64
+	EndLatitude  float64 `json:"end_latitude"`
+	EndLongitude float64 `json:"end_longitude"`
 }
 
 type Rental struct {
-	ID       int
-	CreateAt string
-	UpdateAt string
+	ID       int    `json:"id" db:"id"`
+	CreateAt string `json:"created_at" db:"created_at"`
+	UpdateAt string `json:"updated_at" db:"updated_at"`
 	RentalData
 }

@@ -8,9 +8,10 @@ var (
 )
 
 type BikeData struct {
-	Available bool    `json:"is_available" db:"is_available"`
-	Latitude  float64 `json:"latitude" db:"latitude"`
-	Longitude float64 `json:"longitude" db:"longitude"`
+	Available      bool    `json:"is_available" db:"is_available"`
+	PricePerMinute int     `json:"price_per_minute" db:"price_per_minute"`
+	Latitude       float64 `json:"latitude" db:"latitude"`
+	Longitude      float64 `json:"longitude" db:"longitude"`
 }
 
 type Bike struct {
