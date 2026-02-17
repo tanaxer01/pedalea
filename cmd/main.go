@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/tanaxer01/pedalea/internal/core/admin"
 	"github.com/tanaxer01/pedalea/internal/core/bike"
 	"github.com/tanaxer01/pedalea/internal/core/rental"
 	"github.com/tanaxer01/pedalea/internal/core/user"
@@ -33,7 +34,10 @@ func main() {
 	rentalService := rental.NewService(bikeRepo, rentalRepo)
 	rentalHandler := http.NewRentalHandler(rentalService)
 
-	server := http.NewServer(":8080", userHandler, bikeHandler, rentalHandler, jwtMiddleware)
+	adminService := admin.NewService(userRepo, bikeRepo, rentalRepo)
+	adminHandler := http.NewAdminHandler(adminService)
+
+	server := http.NewServer(":8080", userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware)
 	defer server.Close()
 
 	err = server.Start()

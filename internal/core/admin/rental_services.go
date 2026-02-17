@@ -7,7 +7,7 @@ func (s *Service) UpdateRental(ID int, data pedalea.RentalData) error {
 }
 
 func (s *Service) GetRentalData(ID int) (*pedalea.Rental, error) {
-	return s.rentalRepo.GetRentalData(ID)
+	return s.rentalRepo.GetRentalByID(ID)
 }
 
 func (s *Service) ListRentals() ([]pedalea.Rental, error) {

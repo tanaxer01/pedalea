@@ -10,7 +10,7 @@ type Service struct {
 
 type UserRepo interface {
 	UpdateUser(ID int, data pedalea.UserData) error
-	GetUserData(ID int) (*pedalea.User, error)
+	GetUserByID(ID int) (*pedalea.User, error)
 	ListUsers() ([]pedalea.User, error)
 }
 
@@ -22,7 +22,7 @@ type BikeRepo interface {
 
 type RentalRepo interface {
 	UpdateRental(ID int, data pedalea.RentalData) error
-	GetRentalData(ID int) (*pedalea.Rental, error)
+	GetRentalByID(ID int) (*pedalea.Rental, error)
 	ListRentals() ([]pedalea.Rental, error)
 }
 

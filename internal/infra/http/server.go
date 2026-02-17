@@ -10,7 +10,7 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, jwtMiddleware *JwtMiddleware) *Server {
+func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *JwtMiddleware) *Server {
 	s := &Server{addr: addr}
 	mux := http.NewServeMux()
 
@@ -21,6 +21,8 @@ func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, 
 
 	s.registerUserRoutes(mux, userHandler, jwtMiddleware)
 	s.registerBikeRoutes(mux, bikeHandler, jwtMiddleware)
+	s.registerRentalRoutes(mux, rentalHandler, jwtMiddleware)
+	s.registerAdminRoutes(mux, adminHandler)
 
 	s.httpServer = &http.Server{Addr: addr, Handler: mux}
 
@@ -48,8 +50,13 @@ func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *JwtMi
 	mux.HandleFunc("GET /bikes/available", m.JwtValidationMiddleware(h.ListAvailableBikes))
 }
 
+func (s *Server) registerRentalRoutes(mux *http.ServeMux, h *RentalHandler, m *JwtMiddleware) {
+}
+
 func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler) {
 	// Bikes
+	mux.HandleFunc("GET /admin/bikes", handler.ListBikes)
+
 	// Users
 	mux.HandleFunc("GET /admin/users", handler.ListUsers)
 	mux.HandleFunc("GET /admin/users/{user_id}", handler.GetUser)

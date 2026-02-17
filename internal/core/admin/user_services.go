@@ -7,7 +7,7 @@ func (s *Service) UpdateUser(ID int, data pedalea.UserData) error {
 }
 
 func (s *Service) GetUserData(ID int) (*pedalea.UserData, error) {
-	user, err := s.userRepo.GetUserData(ID)
+	user, err := s.userRepo.GetUserByID(ID)
 	if err != nil {
 		return nil, err
 	}
