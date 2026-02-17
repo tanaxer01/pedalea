@@ -4,5 +4,6 @@ package tools
 
 import (
 	_ "github.com/pressly/goose/v3/cmd/goose"
+	_ "github.com/swaggo/swag/cmd/swag"
 	_ "github.com/vektra/mockery/v2"
 )

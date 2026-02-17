@@ -1,3 +1,14 @@
+// @title Pedalea API
+// @version 1.0
+// @description Bike rental API for Pedalea
+// @host localhost:8080
+// @BasePath /
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Bearer {token}
+// @securityDefinitions.basic BasicAuth
 package main
 
 import (

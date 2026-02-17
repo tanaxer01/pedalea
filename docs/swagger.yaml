@@ -1,0 +1,813 @@
+basePath: /
+definitions:
+  pedalea.Bike:
+    properties:
+      createdAt:
+        type: string
+      id:
+        type: integer
+      is_available:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      price_per_minute:
+        type: integer
+      updatedAt:
+        type: string
+    type: object
+  pedalea.BikeData:
+    properties:
+      is_available:
+        type: boolean
+      latitude:
+        type: number
+      longitude:
+        type: number
+      price_per_minute:
+        type: integer
+    type: object
+  pedalea.EndRental:
+    properties:
+      end_latitude:
+        type: number
+      end_longitude:
+        type: number
+    type: object
+  pedalea.InsertUser:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    - password
+    type: object
+  pedalea.LoginUser:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  pedalea.Rental:
+    properties:
+      bike_id:
+        type: integer
+      cost:
+        type: integer
+      created_at:
+        type: string
+      duration:
+        type: integer
+      end_latitude:
+        type: number
+      end_longitude:
+        type: number
+      end_time:
+        type: integer
+      id:
+        type: integer
+      start_latitude:
+        type: number
+      start_longitude:
+        type: number
+      start_time:
+        type: integer
+      status:
+        $ref: '#/definitions/pedalea.RentalStatus'
+      updated_at:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  pedalea.RentalData:
+    properties:
+      bike_id:
+        type: integer
+      cost:
+        type: integer
+      duration:
+        type: integer
+      end_latitude:
+        type: number
+      end_longitude:
+        type: number
+      end_time:
+        type: integer
+      start_latitude:
+        type: number
+      start_longitude:
+        type: number
+      start_time:
+        type: integer
+      status:
+        $ref: '#/definitions/pedalea.RentalStatus'
+      user_id:
+        type: integer
+    type: object
+  pedalea.RentalStatus:
+    enum:
+    - running
+    - ended
+    type: string
+    x-enum-varnames:
+    - StatusRunning
+    - StatusStopped
+  pedalea.StartRental:
+    properties:
+      bike_id:
+        type: integer
+    type: object
+  pedalea.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: integer
+      last_name:
+        type: string
+      updatedAt:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    type: object
+  pedalea.UserData:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+    required:
+    - email
+    - first_name
+    - last_name
+    type: object
+  utils.DataResponse:
+    properties:
+      data: {}
+    type: object
+  utils.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Bike rental API for Pedalea
+  title: Pedalea API
+  version: "1.0"
+paths:
+  /admin/bikes:
+    get:
+      description: Lists all bikes (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of bikes in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/pedalea.Bike'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: List bikes
+      tags:
+      - admin-bikes
+    post:
+      consumes:
+      - application/json
+      description: Inserts a new bike (admin only)
+      parameters:
+      - description: Bike data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.BikeData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Create a bike
+      tags:
+      - admin-bikes
+  /admin/bikes/{bike_id}:
+    patch:
+      consumes:
+      - application/json
+      description: Updates a bike by ID (admin only)
+      parameters:
+      - description: Bike ID
+        in: path
+        name: bike_id
+        required: true
+        type: integer
+      - description: Bike data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.BikeData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Update a bike
+      tags:
+      - admin-bikes
+  /admin/rentals:
+    get:
+      description: Lists all rentals (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of rentals in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/pedalea.Rental'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: List rentals
+      tags:
+      - admin-rentals
+  /admin/rentals/{rental_id}:
+    get:
+      description: Gets a rental by ID (admin only)
+      parameters:
+      - description: Rental ID
+        in: path
+        name: rental_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rental data in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/pedalea.Rental'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Get rental
+      tags:
+      - admin-rentals
+    patch:
+      consumes:
+      - application/json
+      description: Updates a rental by ID (admin only)
+      parameters:
+      - description: Rental ID
+        in: path
+        name: rental_id
+        required: true
+        type: integer
+      - description: Rental data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.RentalData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Update a rental
+      tags:
+      - admin-rentals
+  /admin/users:
+    get:
+      description: Lists all users (admin only)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of users in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/pedalea.User'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: List users
+      tags:
+      - admin-users
+  /admin/users/{user_id}:
+    get:
+      description: Gets a user by ID (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/pedalea.User'
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Get user
+      tags:
+      - admin-users
+    patch:
+      consumes:
+      - application/json
+      description: Updates a user by ID (admin only)
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - description: User data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.UserData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BasicAuth: []
+      summary: Update a user
+      tags:
+      - admin-users
+  /bikes/available:
+    get:
+      description: Returns all bikes that are currently available
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of bikes in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/pedalea.Bike'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List available bikes
+      tags:
+      - bikes
+  /rentals/end:
+    get:
+      consumes:
+      - application/json
+      description: Ends the current rental for the authenticated user
+      parameters:
+      - description: Rental end payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.EndRental'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: End a rental
+      tags:
+      - rentals
+  /rentals/history:
+    get:
+      description: Returns rental history for the authenticated user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rental history in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/pedalea.RentalData'
+                  type: array
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List user rentals
+      tags:
+      - rentals
+  /rentals/start:
+    get:
+      consumes:
+      - application/json
+      description: Starts a bike rental for the authenticated user
+      parameters:
+      - description: Rental start payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.StartRental'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Start a rental
+      tags:
+      - rentals
+  /user/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticates user and returns a JWT
+      parameters:
+      - description: Login payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.LoginUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: JWT token in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Login user
+      tags:
+      - user
+  /user/profile:
+    get:
+      description: Returns the authenticated user's profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User data in data
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/pedalea.UserData'
+              type: object
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
+      tags:
+      - user
+    patch:
+      consumes:
+      - application/json
+      description: Updates the authenticated user's profile
+      parameters:
+      - description: User profile data
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.UserData'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update current user profile
+      tags:
+      - user
+  /user/register:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new user account
+      parameters:
+      - description: User registration payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/pedalea.InsertUser'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/utils.DataResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/utils.ErrorResponse'
+      summary: Register a new user
+      tags:
+      - user
+schemes:
+- http
+securityDefinitions:
+  BasicAuth:
+    type: basic
+  BearerAuth:
+    description: Bearer {token}
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

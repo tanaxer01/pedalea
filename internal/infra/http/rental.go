@@ -17,6 +17,19 @@ func NewRentalHandler(service *rental.Service) *RentalHandler {
 	return &RentalHandler{service: service}
 }
 
+// StartRental godoc
+// @Summary Start a rental
+// @Description Starts a bike rental for the authenticated user
+// @Tags rentals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param payload body pedalea.StartRental true "Rental start payload"
+// @Success 200 {object} utils.DataResponse{data=string} "OK"
+// @Failure 400 {object} utils.ErrorResponse "Bad request"
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /rentals/start [get]
 func (h *RentalHandler) StartRental(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
@@ -41,8 +54,23 @@ func (h *RentalHandler) StartRental(w http.ResponseWriter, r *http.Request) {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	utils.WriteResponse(w, map[string]string{"status": "ok"})
 }
 
+// EndRental godoc
+// @Summary End a rental
+// @Description Ends the current rental for the authenticated user
+// @Tags rentals
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param payload body pedalea.EndRental true "Rental end payload"
+// @Success 200 {object} utils.DataResponse{data=string} "OK"
+// @Failure 400 {object} utils.ErrorResponse "Bad request"
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /rentals/end [get]
 func (h *RentalHandler) EndRental(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
@@ -67,8 +95,20 @@ func (h *RentalHandler) EndRental(w http.ResponseWriter, r *http.Request) {
 		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
 		return
 	}
+
+	utils.WriteResponse(w, map[string]string{"status": "ok"})
 }
 
+// ListUserRentals godoc
+// @Summary List user rentals
+// @Description Returns rental history for the authenticated user
+// @Tags rentals
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} utils.DataResponse{data=[]pedalea.RentalData} "Rental history in data"
+// @Failure 401 {object} utils.ErrorResponse "Unauthorized"
+// @Failure 500 {object} utils.ErrorResponse "Internal server error"
+// @Router /rentals/history [get]
 func (h *RentalHandler) ListUserRentals(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
