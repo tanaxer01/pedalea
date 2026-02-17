@@ -36,11 +36,6 @@ func (a *JwtAuth) ValidateToken(request *http.Request, tokenType, tokenString st
 		return nil, pedalea.ErrInvalidTokenFormat
 	}
 
-	credentials := strings.Split(tokenString, ":")
-	if len(credentials) != 2 {
-		return nil, pedalea.ErrInvalidTokenFormat
-	}
-
 	token, err := jwt.ParseWithClaims(tokenString, &pedalea.UserClaim{}, func(token *jwt.Token) (any, error) {
 		return []byte(a.SecretKey), nil
 	})
