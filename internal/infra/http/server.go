@@ -3,6 +3,9 @@ package http
 import (
 	"fmt"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/tanaxer01/pedalea/pkg/utils"
 )
 
 type Server struct {
@@ -12,19 +15,18 @@ type Server struct {
 
 func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *AuthMiddleware, adminMiddleware *AuthMiddleware) *Server {
 	s := &Server{addr: addr}
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	mux.HandleFunc("/status", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Server is up"))
+	r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
+		utils.WriteResponse(w, "OK")
 	})
 
-	s.registerUserRoutes(mux, userHandler, jwtMiddleware)
-	s.registerBikeRoutes(mux, bikeHandler, jwtMiddleware)
-	s.registerRentalRoutes(mux, rentalHandler, jwtMiddleware)
-	s.registerAdminRoutes(mux, adminHandler, adminMiddleware)
+	r.Mount("/user", s.userRouter(userHandler, jwtMiddleware))
+	r.Mount("/bikes", s.bikeRouter(bikeHandler, jwtMiddleware))
+	r.Mount("/routes", s.rentalRouter(rentalHandler, jwtMiddleware))
+	r.Mount("/admin", s.adminRouter(adminHandler, adminMiddleware))
 
-	s.httpServer = &http.Server{Addr: addr, Handler: mux}
+	s.httpServer = &http.Server{Addr: addr, Handler: r}
 
 	return s
 }
@@ -39,37 +41,56 @@ func (s *Server) Close() error {
 	return s.httpServer.Close()
 }
 
-func (s *Server) registerUserRoutes(mux *http.ServeMux, h *UserHandler, m *AuthMiddleware) {
-	mux.HandleFunc("POST /user/register", h.Register)
-	mux.HandleFunc("POST /user/login", h.Login)
-	mux.HandleFunc("GET /user/profile", m.AuthMiddleware(h.GetUserData))
-	mux.HandleFunc("PATCH /user/profile", m.AuthMiddleware(h.UpdateUser))
+func (s *Server) userRouter(h *UserHandler, m *AuthMiddleware) http.Handler {
+	r := chi.NewRouter()
+
+	r.Post("/register", h.Register)
+	r.Post("/login", h.Login)
+
+	r.With(m.AuthMiddleware).Get("/profile", h.GetUserData)
+	r.With(m.AuthMiddleware).Patch("/profile", h.UpdateUser)
+
+	return r
 }
 
-func (s *Server) registerBikeRoutes(mux *http.ServeMux, h *BikeHandler, m *AuthMiddleware) {
-	mux.HandleFunc("GET /bikes/available", m.AuthMiddleware(h.ListAvailableBikes))
+func (s *Server) bikeRouter(h *BikeHandler, m *AuthMiddleware) http.Handler {
+	r := chi.NewRouter()
+	r.Use(m.AuthMiddleware)
+
+	r.Get("/available", h.ListAvailableBikes)
+
+	return r
 }
 
-func (s *Server) registerRentalRoutes(mux *http.ServeMux, h *RentalHandler, m *AuthMiddleware) {
-	mux.HandleFunc("GET /rentals/start", m.AuthMiddleware(h.StartRental))
-	mux.HandleFunc("GET /rentals/end", m.AuthMiddleware(h.EndRental))
-	mux.HandleFunc("GET /rentals/history", m.AuthMiddleware(h.ListUserRentals))
+func (s *Server) rentalRouter(h *RentalHandler, m *AuthMiddleware) http.Handler {
+	r := chi.NewRouter()
+	r.Use(m.AuthMiddleware)
 
+	r.Get("/start", h.StartRental)
+	r.Get("/end", h.EndRental)
+	r.Get("/history", h.ListUserRentals)
+
+	return r
 }
 
-func (s *Server) registerAdminRoutes(mux *http.ServeMux, handler *AdminHandler, m *AuthMiddleware) {
+func (s *Server) adminRouter(h *AdminHandler, m *AuthMiddleware) http.Handler {
+	r := chi.NewRouter()
+	r.Use(m.AuthMiddleware)
+
 	// Bikes
-	mux.HandleFunc("POST /admin/bikes", m.AuthMiddleware(handler.InsertBike))
-	mux.HandleFunc("PATCH /admin/bikes/{bike_id}", m.AuthMiddleware(handler.UpdateBike))
-	mux.HandleFunc("GET /admin/bikes", m.AuthMiddleware(handler.ListBikes))
+	r.Post("/bikes", h.InsertBike)
+	r.Patch("/bikes/{bike_id}", h.UpdateBike)
+	r.Get("/bikes", h.ListBikes)
 
 	// Users
-	mux.HandleFunc("GET /admin/users", m.AuthMiddleware(handler.ListUsers))
-	mux.HandleFunc("GET /admin/users/{user_id}", m.AuthMiddleware(handler.GetUser))
-	mux.HandleFunc("PATCH /admin/users/{user_id}", m.AuthMiddleware(handler.UpdateUser))
+	r.Get("/users", h.ListUsers)
+	r.Get("/users/{user_id}", h.GetUser)
+	r.Patch("/users/{user_id}", h.UpdateUser)
 
 	// Rentals
-	mux.HandleFunc("PATCH /admin/rentals/{rental_id}", m.AuthMiddleware(handler.UpdateRental))
-	mux.HandleFunc("GET /admin/rentals/{rental_id}", m.AuthMiddleware(handler.GetRental))
-	mux.HandleFunc("GET /admin/rentals", m.AuthMiddleware(handler.ListRentals))
+	r.Patch("/rentals/{rental_id}", h.UpdateRental)
+	r.Get("/rentals/{rental_id}", h.GetRental)
+	r.Get("/rentals", h.ListRentals)
+
+	return r
 }

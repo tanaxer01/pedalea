@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/tanaxer01/pedalea/internal/core/admin"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 	"github.com/tanaxer01/pedalea/pkg/utils"
@@ -62,8 +63,8 @@ func (h *AdminHandler) InsertBike(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/bikes/{bike_id} [patch]
 func (h *AdminHandler) UpdateBike(w http.ResponseWriter, r *http.Request) {
-	BikeID := r.PathValue("bike_id")
-	ID, err := strconv.Atoi(BikeID)
+	bikeID := chi.URLParam(r, "bike_id")
+	ID, err := strconv.Atoi(bikeID)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
 		return
@@ -119,8 +120,8 @@ func (h *AdminHandler) ListBikes(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/users/{user_id} [patch]
 func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
-	UserID := r.PathValue("user_id")
-	ID, err := strconv.Atoi(UserID)
+	userID := chi.URLParam(r, "user_id")
+	ID, err := strconv.Atoi(userID)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
 		return
@@ -173,8 +174,8 @@ func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/users/{user_id} [get]
 func (h *AdminHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	UserID := r.PathValue("user_id")
-	ID, err := strconv.Atoi(UserID)
+	userID := chi.URLParam(r, "user_id")
+	ID, err := strconv.Atoi(userID)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
 		return
@@ -205,8 +206,8 @@ func (h *AdminHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/rentals/{rental_id} [patch]
 func (h *AdminHandler) UpdateRental(w http.ResponseWriter, r *http.Request) {
-	RentalID := r.PathValue("rental_id")
-	ID, err := strconv.Atoi(RentalID)
+	rentalID := chi.URLParam(r, "rental_id")
+	ID, err := strconv.Atoi(rentalID)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
 		return
@@ -259,8 +260,8 @@ func (h *AdminHandler) ListRentals(w http.ResponseWriter, r *http.Request) {
 // @Failure 500 {object} utils.ErrorResponse "Internal server error"
 // @Router /admin/rentals/{rental_id} [get]
 func (h *AdminHandler) GetRental(w http.ResponseWriter, r *http.Request) {
-	RentalID := r.PathValue("rental_id")
-	ID, err := strconv.Atoi(RentalID)
+	rentalID := chi.URLParam(r, "rental_id")
+	ID, err := strconv.Atoi(rentalID)
 	if err != nil {
 		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
 		return

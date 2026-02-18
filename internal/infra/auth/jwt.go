@@ -54,7 +54,5 @@ func (a *JwtAuth) ValidateToken(request *http.Request, tokenType, tokenString st
 	}
 
 	ctx := context.WithValue(request.Context(), "UserID", subject)
-	request = request.WithContext(ctx)
-
-	return request, nil
+	return request.WithContext(ctx), nil
 }

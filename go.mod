@@ -3,6 +3,7 @@ module github.com/tanaxer01/pedalea
 go 1.25.4
 
 require (
+	github.com/go-chi/chi/v5 v5.2.5
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/golang-jwt/jwt/v5 v5.2.2
 	github.com/jmoiron/sqlx v1.4.0
