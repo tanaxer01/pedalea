@@ -19,7 +19,7 @@ func TestRentalFlow(t *testing.T) {
 	err = goose.SetDialect("sqlite3")
 	require.Nil(t, err)
 
-	err = goose.Up(db.DB, "../../../migrations")
+	err = goose.UpByOne(db.DB, "../../../migrations")
 	require.Nil(t, err)
 
 	authRepo := auth.NewJwtAuth("secret-key")

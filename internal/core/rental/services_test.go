@@ -2,6 +2,7 @@ package rental
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -53,23 +54,36 @@ func TestRentalWithOverlappingBike(t *testing.T) {
 	})
 
 	require.ErrorIs(t, err, pedalea.ErrUserAlreadyRented)
+	rentalRepo.AssertExpectations(t)
 }
 
 func TestClosingRentalOutsideRange(t *testing.T) {
 	rentalRepo := new(mocks.RentalRepo)
+	bikeRepo := new(mocks.BikeRepo)
 
 	rentalRepo.On("GetRentalByUserID", mock.Anything).Return(&pedalea.Rental{
 		RentalData: pedalea.RentalData{
+			BikeID:         1,
+			StartTime:      time.Now().Unix(),
 			StartLatitude:  0,
 			StartLongitude: 0,
 		},
 	}, nil)
 
-	s := NewService(nil, rentalRepo)
+	bikeRepo.On("GetBikeByID", mock.Anything).Return(&pedalea.Bike{
+		BikeData: pedalea.BikeData{
+			PricePerMinute: 10,
+		},
+	}, nil)
+
+	s := NewService(bikeRepo, rentalRepo)
 	err := s.EndRental(1, pedalea.EndRental{
 		EndLatitude:  0.1,
 		EndLongitude: 0.1,
 	})
 
 	require.ErrorIs(t, err, pedalea.ErrRentalInvalidEndCoords)
+
+	rentalRepo.AssertExpectations(t)
+	bikeRepo.AssertExpectations(t)
 }

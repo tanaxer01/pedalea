@@ -1,5 +1,7 @@
 package bike
 
+//go:generate mockery --name=BikeRepo --output=./mocks --outpkg=mocks
+
 import "github.com/tanaxer01/pedalea/pkg/pedalea"
 
 type Service struct {
