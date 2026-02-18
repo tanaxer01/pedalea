@@ -12,6 +12,9 @@
 package main
 
 import (
+	"github.com/joho/godotenv"
+	"github.com/kelseyhightower/envconfig"
+
 	"github.com/tanaxer01/pedalea/internal/core/admin"
 	"github.com/tanaxer01/pedalea/internal/core/bike"
 	"github.com/tanaxer01/pedalea/internal/core/rental"
@@ -22,8 +25,27 @@ import (
 	"github.com/tanaxer01/pedalea/internal/infra/sqlite"
 )
 
+type Specification struct {
+	Port             string `envconfig:"PORT" default:"8080"`
+	DbFile           string `envconfig:"DB_FILE" default:"pedalea.db"`
+	JwtSecret        string `envconfig:"JWT_SECRET" required:"true"`
+	AdminCredentials string `envconfig:"ADMIN_CREDENTIALS" required:"true"`
+}
+
 func main() {
-	db, err := sqlite.NewDB("pedalea.db")
+	var s Specification
+
+	err := godotenv.Load(".env")
+	if err != nil {
+		panic(err)
+	}
+
+	err = envconfig.Process("pedalea", &s)
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := sqlite.NewDB(s.DbFile)
 	if err != nil {
 		panic(err)
 	}
@@ -33,10 +55,10 @@ func main() {
 	bikeRepo := sqlite.NewBikeRepository(db)
 	rentalRepo := sqlite.NewRentalRepository(db)
 
-	jwtAuth := auth.NewJwtAuth("secret")
+	jwtAuth := auth.NewJwtAuth(s.JwtSecret)
 	jwtMiddleware := http.NewAuthMiddleware(jwtAuth)
 
-	basicAuth := auth.NewBasicAuth("YWRtaW46cGFzc3dvcmQ=")
+	basicAuth := auth.NewBasicAuth(s.AdminCredentials)
 	basicMiddleware := http.NewAuthMiddleware(basicAuth)
 
 	userService := user.NewService(userRepo, &crypto.Crypto{}, jwtAuth)
@@ -51,7 +73,7 @@ func main() {
 	adminService := admin.NewService(userRepo, bikeRepo, rentalRepo)
 	adminHandler := http.NewAdminHandler(adminService)
 
-	server := http.NewServer(":8080", userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware, basicMiddleware)
+	server := http.NewServer(":"+s.Port, userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware, basicMiddleware)
 	defer server.Close()
 
 	err = server.Start()
