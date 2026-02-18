@@ -12,6 +12,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/joho/godotenv"
 	"github.com/kelseyhightower/envconfig"
 
@@ -35,12 +37,13 @@ type Specification struct {
 func main() {
 	var s Specification
 
-	err := godotenv.Load(".env")
-	if err != nil {
-		panic(err)
+	if err := godotenv.Load(".env"); err != nil {
+		if !os.IsNotExist(err) {
+			panic(err)
+		}
 	}
 
-	err = envconfig.Process("pedalea", &s)
+	err := envconfig.Process("pedalea", &s)
 	if err != nil {
 		panic(err)
 	}
