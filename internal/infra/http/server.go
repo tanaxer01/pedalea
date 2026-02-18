@@ -5,6 +5,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/httplog/v3"
+	"github.com/tanaxer01/pedalea/internal/infra/logs"
 	"github.com/tanaxer01/pedalea/pkg/utils"
 )
 
@@ -13,9 +15,12 @@ type Server struct {
 	httpServer *http.Server
 }
 
-func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *AuthMiddleware, adminMiddleware *AuthMiddleware) *Server {
+func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, rentalHandler *RentalHandler, adminHandler *AdminHandler, jwtMiddleware *AuthMiddleware, adminMiddleware *AuthMiddleware, logger *logs.Logger) *Server {
 	s := &Server{addr: addr}
+
 	r := chi.NewRouter()
+
+	r.Use(httplog.RequestLogger(logger.Logger, &httplog.Options{}))
 
 	r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
 		utils.WriteResponse(w, "OK")

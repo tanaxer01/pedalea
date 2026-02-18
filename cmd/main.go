@@ -24,6 +24,7 @@ import (
 	"github.com/tanaxer01/pedalea/internal/infra/auth"
 	"github.com/tanaxer01/pedalea/internal/infra/crypto"
 	"github.com/tanaxer01/pedalea/internal/infra/http"
+	"github.com/tanaxer01/pedalea/internal/infra/logs"
 	"github.com/tanaxer01/pedalea/internal/infra/sqlite"
 )
 
@@ -54,6 +55,8 @@ func main() {
 	}
 	defer db.Close()
 
+	logger := logs.NewLogger()
+
 	userRepo := sqlite.NewUserRepository(db)
 	bikeRepo := sqlite.NewBikeRepository(db)
 	rentalRepo := sqlite.NewRentalRepository(db)
@@ -76,7 +79,7 @@ func main() {
 	adminService := admin.NewService(userRepo, bikeRepo, rentalRepo)
 	adminHandler := http.NewAdminHandler(adminService)
 
-	server := http.NewServer(":"+s.Port, userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware, basicMiddleware)
+	server := http.NewServer(":"+s.Port, userHandler, bikeHandler, rentalHandler, adminHandler, jwtMiddleware, basicMiddleware, logger)
 	defer server.Close()
 
 	err = server.Start()
