@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"encoding/base64"
 	"net/http"
 	"strings"
 
@@ -20,12 +21,12 @@ func (a *BasicAuth) ValidateToken(request *http.Request, tokenType, tokenString 
 		return nil, pedalea.ErrInvalidTokenFormat
 	}
 
-	credentials := strings.Split(tokenString, ":")
-	if len(credentials) != 2 {
+	decoded, err := base64.StdEncoding.DecodeString(a.SecretKey)
+	if err != nil {
 		return nil, pedalea.ErrInvalidTokenFormat
 	}
 
-	if credentials[0] != "admin" || credentials[1] != a.SecretKey {
+	if string(decoded) != tokenString {
 		return nil, pedalea.ErrInvalidTokenCredentials
 	}
 
