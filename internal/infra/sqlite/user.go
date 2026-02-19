@@ -3,15 +3,14 @@ package sqlite
 import (
 	"time"
 
-	"github.com/jmoiron/sqlx"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
 type UserRepository struct {
-	db *sqlx.DB
+	db DBRunner
 }
 
-func NewUserRepository(db *sqlx.DB) *UserRepository {
+func NewUserRepository(db DBRunner) *UserRepository {
 	return &UserRepository{db: db}
 }
 

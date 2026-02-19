@@ -9,6 +9,13 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
+type DBRunner interface {
+	Exec(query string, args ...any) (sql.Result, error)
+	NamedExec(query string, arg any) (sql.Result, error)
+	Get(dest any, query string, args ...any) error
+	Select(dest any, query string, args ...any) error
+}
+
 func NewDB(file string) (*sqlx.DB, error) {
 	return sqlx.Connect("sqlite3", file)
 }

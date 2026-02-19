@@ -10,6 +10,7 @@ import (
 type Service struct {
 	bikeRepo   BikeRepo
 	rentalRepo RentalRepo
+	txRunner   TxRunner
 }
 
 type BikeRepo interface {
@@ -25,114 +26,134 @@ type RentalRepo interface {
 	ListOverlappingRentals(userID, bikeID int) ([]pedalea.Rental, error)
 }
 
+type TxRunner interface {
+	WithinTx(fn func(bikeRepo BikeRepo, rentalRepo RentalRepo) error) error
+}
+
 func NewService(bikeRepo BikeRepo, rentalRepo RentalRepo) *Service {
-	return &Service{bikeRepo: bikeRepo, rentalRepo: rentalRepo}
+	return &Service{bikeRepo: bikeRepo, rentalRepo: rentalRepo, txRunner: nil}
+}
+
+func NewServiceWithTxRunner(bikeRepo BikeRepo, rentalRepo RentalRepo, txRunner TxRunner) *Service {
+	return &Service{bikeRepo: bikeRepo, rentalRepo: rentalRepo, txRunner: txRunner}
+}
+
+func (s *Service) withinTx(fn func(bikeRepo BikeRepo, rentalRepo RentalRepo) error) error {
+	if s.txRunner == nil {
+		return fn(s.bikeRepo, s.rentalRepo)
+	}
+
+	return s.txRunner.WithinTx(fn)
 }
 
 func (s *Service) StartRental(ID int, event pedalea.StartRental) error {
-	// We ensure users can't start rentals for other users
-	rentals, err := s.rentalRepo.ListOverlappingRentals(ID, event.BikeID)
-	if err != nil {
-		return err
-	}
-
-	// We ensure only valid users & bikes can be used to start a rental
-	for _, rental := range rentals {
-		if rental.UserID == ID {
-			return pedalea.ErrUserAlreadyRented
+	return s.withinTx(func(bikeRepo BikeRepo, rentalRepo RentalRepo) error {
+		// We ensure users can't start rentals for other users
+		rentals, err := rentalRepo.ListOverlappingRentals(ID, event.BikeID)
+		if err != nil {
+			return err
 		}
 
-		if rental.BikeID == event.BikeID {
-			return pedalea.ErrBikeAlreadyRented
+		// We ensure only valid users & bikes can be used to start a rental
+		for _, rental := range rentals {
+			if rental.UserID == ID {
+				return pedalea.ErrUserAlreadyRented
+			}
+
+			if rental.BikeID == event.BikeID {
+				return pedalea.ErrBikeAlreadyRented
+			}
 		}
-	}
 
-	// NOTE: Should not be possible to not find the bike cause foreign key constraints
-	bike, err := s.bikeRepo.GetBikeByID(event.BikeID)
-	if err != nil {
+		// NOTE: Should not be possible to not find the bike cause foreign key constraints
+		bike, err := bikeRepo.GetBikeByID(event.BikeID)
+		if err != nil {
+			return err
+		}
+
+		// Also: Partial updates are not handled for the moment being
+		err = bikeRepo.UpdateBike(event.BikeID, pedalea.BikeData{
+			Available:      false,
+			PricePerMinute: bike.PricePerMinute,
+			Latitude:       bike.Latitude,
+			Longitude:      bike.Longitude,
+		})
+		if err != nil {
+			return err
+		}
+
+		err = rentalRepo.InsertRental(pedalea.RentalData{
+			UserID:         ID,
+			BikeID:         event.BikeID,
+			StartTime:      time.Now().Unix(),
+			StartLatitude:  bike.Latitude,
+			StartLongitude: bike.Longitude,
+		})
+
 		return err
-	}
-
-	// Also: Partial updates are not handled for the moment being
-	err = s.bikeRepo.UpdateBike(event.BikeID, pedalea.BikeData{
-		Available:      false,
-		PricePerMinute: bike.PricePerMinute,
-		Latitude:       bike.Latitude,
-		Longitude:      bike.Longitude,
 	})
-	if err != nil {
-		return err
-	}
-
-	err = s.rentalRepo.InsertRental(pedalea.RentalData{
-		UserID:         ID,
-		BikeID:         event.BikeID,
-		StartTime:      time.Now().Unix(),
-		StartLatitude:  bike.Latitude,
-		StartLongitude: bike.Longitude,
-	})
-
-	return err
 }
 
 func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
-	rental, err := s.rentalRepo.GetRentalByUserID(UserID)
-	if err != nil {
+	return s.withinTx(func(bikeRepo BikeRepo, rentalRepo RentalRepo) error {
+		rental, err := rentalRepo.GetRentalByUserID(UserID)
+		if err != nil {
+			return err
+		}
+
+		bike, err := bikeRepo.GetBikeByID(rental.BikeID)
+		if err != nil {
+			return err
+		}
+
+		// Haversine formula
+		// https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
+		R := 6371. // earth radius in km
+
+		toRad := func(d float64) float64 { return d * math.Pi / 180 }
+
+		lat1 := toRad(rental.StartLatitude)
+		lat2 := toRad(event.EndLatitude)
+		dlat := toRad(event.EndLatitude - rental.StartLatitude)
+		dlon := toRad(event.EndLongitude - rental.StartLongitude)
+
+		a := math.Pow(math.Sin(dlat/2), 2) +
+			math.Cos(lat1)*math.Cos(lat2)*math.Pow(math.Sin(dlon/2), 2)
+		c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
+
+		if R*c > 5 {
+			return pedalea.ErrRentalInvalidEndCoords
+		}
+
+		err = bikeRepo.UpdateBike(rental.BikeID, pedalea.BikeData{
+			Available:      true,
+			PricePerMinute: bike.PricePerMinute,
+			Latitude:       event.EndLatitude,
+			Longitude:      event.EndLongitude,
+		})
+
+		if err != nil {
+			return err
+		}
+
+		// Unix time is in seconds
+		curr_time := time.Now().Unix()
+		duration := int(math.Ceil(float64(curr_time-rental.StartTime) / 60.))
+
+		err = rentalRepo.UpdateRental(rental.ID, pedalea.RentalData{
+			Status:         pedalea.StatusStopped,
+			StartTime:      rental.StartTime,
+			EndTime:        &curr_time,
+			StartLatitude:  rental.StartLatitude,
+			StartLongitude: rental.StartLongitude,
+			EndLatitude:    &event.EndLatitude,
+			EndLongitude:   &event.EndLongitude,
+			Duration:       duration,
+			Cost:           duration * bike.PricePerMinute,
+		})
+
 		return err
-	}
-
-	bike, err := s.bikeRepo.GetBikeByID(rental.BikeID)
-	if err != nil {
-		return err
-	}
-
-	// Haversine formula
-	// https://stackoverflow.com/questions/4913349/haversine-formula-in-python-bearing-and-distance-between-two-gps-points
-	R := 6371. // earth radius in km
-
-	toRad := func(d float64) float64 { return d * math.Pi / 180 }
-
-	lat1 := toRad(rental.StartLatitude)
-	lat2 := toRad(event.EndLatitude)
-	dlat := toRad(event.EndLatitude - rental.StartLatitude)
-	dlon := toRad(event.EndLongitude - rental.StartLongitude)
-
-	a := math.Pow(math.Sin(dlat/2), 2) +
-		math.Cos(lat1)*math.Cos(lat2)*math.Pow(math.Sin(dlon/2), 2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-
-	if R*c > 5 {
-		return pedalea.ErrRentalInvalidEndCoords
-	}
-
-	err = s.bikeRepo.UpdateBike(rental.BikeID, pedalea.BikeData{
-		Available:      true,
-		PricePerMinute: bike.PricePerMinute,
-		Latitude:       event.EndLatitude,
-		Longitude:      event.EndLongitude,
 	})
-
-	if err != nil {
-		return err
-	}
-
-	// Unix time is in seconds
-	curr_time := time.Now().Unix()
-	duration := int(math.Ceil(float64(curr_time-rental.StartTime) / 60.))
-
-	err = s.rentalRepo.UpdateRental(rental.ID, pedalea.RentalData{
-		Status:         pedalea.StatusStopped,
-		StartTime:      rental.StartTime,
-		EndTime:        &curr_time,
-		StartLatitude:  rental.StartLatitude,
-		StartLongitude: rental.StartLongitude,
-		EndLatitude:    &event.EndLatitude,
-		EndLongitude:   &event.EndLongitude,
-		Duration:       duration,
-		Cost:           duration * bike.PricePerMinute,
-	})
-
-	return err
 }
 
 func (s *Service) ListRentals(ID int) ([]pedalea.RentalData, error) {

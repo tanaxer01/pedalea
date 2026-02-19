@@ -60,6 +60,7 @@ func main() {
 	userRepo := sqlite.NewUserRepository(db)
 	bikeRepo := sqlite.NewBikeRepository(db)
 	rentalRepo := sqlite.NewRentalRepository(db)
+	txRunner := sqlite.NewTxRunner(db)
 
 	jwtAuth := auth.NewJwtAuth(s.JwtSecret)
 	jwtMiddleware := http.NewAuthMiddleware(jwtAuth)
@@ -73,7 +74,7 @@ func main() {
 	bikeService := bike.NewService(bikeRepo)
 	bikeHandler := http.NewBikeHandler(bikeService)
 
-	rentalService := rental.NewService(bikeRepo, rentalRepo)
+	rentalService := rental.NewServiceWithTxRunner(bikeRepo, rentalRepo, txRunner)
 	rentalHandler := http.NewRentalHandler(rentalService)
 
 	adminService := admin.NewService(userRepo, bikeRepo, rentalRepo)
