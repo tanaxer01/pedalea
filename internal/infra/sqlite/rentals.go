@@ -24,7 +24,7 @@ func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
 		)`, data)
 
 	if isDuplicated(err) {
-		return err
+		return pedalea.ErrRentalAlreadyExists
 	} else if err != nil {
 		return err
 	}

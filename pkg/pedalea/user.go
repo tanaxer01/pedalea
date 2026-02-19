@@ -12,6 +12,8 @@ var (
 
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrUserNotFound       = errors.New("User not found")
+	ErrEmailAlreadyExists = errors.New("Email already exists")
+
 	ErrInvalidJwtSubject  = errors.New("Jwt subject is invalid id")
 	ErrInvalidCredentials = errors.New("Invalid credentials")
 	ErrInvalidOperation   = errors.New("Invalid operation")

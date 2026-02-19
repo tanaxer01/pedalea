@@ -28,7 +28,7 @@ func NewServer(addr string, userHandler *UserHandler, bikeHandler *BikeHandler, 
 
 	r.Mount("/user", s.userRouter(userHandler, jwtMiddleware))
 	r.Mount("/bikes", s.bikeRouter(bikeHandler, jwtMiddleware))
-	r.Mount("/routes", s.rentalRouter(rentalHandler, jwtMiddleware))
+	r.Mount("/rentals", s.rentalRouter(rentalHandler, jwtMiddleware))
 	r.Mount("/admin", s.adminRouter(adminHandler, adminMiddleware))
 
 	s.httpServer = &http.Server{Addr: addr, Handler: r}
@@ -71,8 +71,8 @@ func (s *Server) rentalRouter(h *RentalHandler, m *AuthMiddleware) http.Handler 
 	r := chi.NewRouter()
 	r.Use(m.AuthMiddleware)
 
-	r.Get("/start", h.StartRental)
-	r.Get("/end", h.EndRental)
+	r.Post("/start", h.StartRental)
+	r.Post("/end", h.EndRental)
 	r.Get("/history", h.ListUserRentals)
 
 	return r

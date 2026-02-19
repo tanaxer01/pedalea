@@ -60,7 +60,7 @@ func (r *BikeRepository) GetBikeByID(ID int) (*pedalea.Bike, error) {
 	err := r.db.Get(&bike, "SELECT id, is_available, latitude, longitude, price_per_minute, created_at, updated_at FROM bikes WHERE id = $1", ID)
 
 	if isNotFound(err) {
-		return nil, pedalea.ErrUserNotFound
+		return nil, pedalea.ErrBikeNotFound
 	} else if err != nil {
 		return nil, err
 	}

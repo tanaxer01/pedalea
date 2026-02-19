@@ -34,7 +34,6 @@ func NewService(userRepo UserRepo, crypto Crypto, auth Auth) *Service {
 	return &Service{userRepo: userRepo, crypto: crypto, auth: auth}
 }
 
-// TODO: Should we return a JWT token?
 func (s *Service) InsertUser(data pedalea.InsertUser) error {
 	hashedPassword, err := s.crypto.HashPassword(data.Password)
 	if err != nil {
@@ -47,7 +46,6 @@ func (s *Service) InsertUser(data pedalea.InsertUser) error {
 	return err
 }
 
-// TODO: This does not allow partial updates, that sucks
 func (s *Service) UpdateUser(ID int, data pedalea.UserData) error {
 	return s.userRepo.UpdateUser(ID, data)
 }
@@ -58,8 +56,6 @@ func (s *Service) Login(data pedalea.LoginUser) (string, error) {
 		return "", err
 	}
 
-	// TODO: Domain error on no cols found
-	// TODO: Wrap in domain error
 	if err := s.crypto.ValidatePassword(user.HashedPassword, data.Password); err != nil {
 		return "", err
 	}

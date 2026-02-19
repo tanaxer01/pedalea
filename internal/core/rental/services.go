@@ -47,19 +47,19 @@ func (s *Service) StartRental(ID int, event pedalea.StartRental) error {
 		}
 	}
 
+	// NOTE: Should not be possible to not find the bike cause foreign key constraints
 	bike, err := s.bikeRepo.GetBikeByID(event.BikeID)
 	if err != nil {
 		return err
 	}
 
-	// We update the availability of the bike
 	err = s.bikeRepo.UpdateBike(event.BikeID, pedalea.BikeData{
 		Available: false,
 		Latitude:  bike.Latitude,
 		Longitude: bike.Longitude,
 	})
 	if err != nil {
-		return nil
+		return err
 	}
 
 	err = s.rentalRepo.InsertRental(pedalea.RentalData{

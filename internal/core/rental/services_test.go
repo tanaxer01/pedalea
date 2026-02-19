@@ -14,6 +14,7 @@ import (
 //go:generate mockery --name=RentalRepo --output=./mocks --outpkg=mocks
 
 func TestRentalWithOverlappingUser(t *testing.T) {
+	bikeRepo := new(mocks.BikeRepo)
 	rentalRepo := new(mocks.RentalRepo)
 
 	rentalRepo.On("ListOverlappingRentals", mock.Anything, mock.Anything).Return([]pedalea.Rental{
@@ -21,39 +22,47 @@ func TestRentalWithOverlappingUser(t *testing.T) {
 			ID: 1,
 			RentalData: pedalea.RentalData{
 				UserID: 1,
-				BikeID: 2,
+				BikeID: 4,
 			},
 		},
 	}, nil)
 
-	s := NewService(nil, rentalRepo)
-	err := s.StartRental(1, pedalea.StartRental{
-		BikeID: 2,
-	})
+	err := NewService(bikeRepo, rentalRepo).StartRental(1, pedalea.StartRental{BikeID: 2})
 
 	require.ErrorIs(t, err, pedalea.ErrUserAlreadyRented)
 
+	bikeRepo.AssertNotCalled(t, "GetBikeByID", mock.Anything)
+	bikeRepo.AssertNotCalled(t, "UpdateBike", mock.Anything, mock.Anything)
+	bikeRepo.AssertExpectations(t)
+
+	rentalRepo.AssertNotCalled(t, "InsertRental", mock.Anything)
 	rentalRepo.AssertExpectations(t)
 }
 
 func TestRentalWithOverlappingBike(t *testing.T) {
+	bikeRepo := new(mocks.BikeRepo)
 	rentalRepo := new(mocks.RentalRepo)
 
 	rentalRepo.On("ListOverlappingRentals", mock.Anything, mock.Anything).Return([]pedalea.Rental{
 		{
 			ID: 1,
 			RentalData: pedalea.RentalData{
-				UserID: 1,
+				UserID: 100,
+				BikeID: 1,
 			},
 		},
 	}, nil)
 
-	s := NewService(nil, rentalRepo)
-	err := s.StartRental(1, pedalea.StartRental{
+	err := NewService(bikeRepo, rentalRepo).StartRental(1, pedalea.StartRental{
 		BikeID: 1,
 	})
+	require.ErrorIs(t, err, pedalea.ErrBikeAlreadyRented)
 
-	require.ErrorIs(t, err, pedalea.ErrUserAlreadyRented)
+	bikeRepo.AssertNotCalled(t, "GetBikeByID", mock.Anything)
+	bikeRepo.AssertNotCalled(t, "UpdateBike", mock.Anything, mock.Anything)
+	bikeRepo.AssertExpectations(t)
+
+	rentalRepo.AssertNotCalled(t, "InsertRental", mock.Anything)
 	rentalRepo.AssertExpectations(t)
 }
 

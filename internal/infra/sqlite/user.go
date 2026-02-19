@@ -22,7 +22,7 @@ func (r *UserRepository) InsertUser(user *pedalea.InsertUser) error {
 	)
 
 	if isDuplicated(err) {
-		return err
+		return pedalea.ErrUserAlreadyExists
 	} else if err != nil {
 		return err
 	}
@@ -40,8 +40,9 @@ func (r *UserRepository) UpdateUser(ID int, data pedalea.UserData) error {
 		ID,
 	)
 
-	// TODO: Handle better cases where nothing was updated
-	if err != nil {
+	if isDuplicated(err) {
+		return pedalea.ErrEmailAlreadyExists
+	} else if err != nil {
 		return err
 	}
 
@@ -50,6 +51,9 @@ func (r *UserRepository) UpdateUser(ID int, data pedalea.UserData) error {
 		return err
 	}
 
+	// NOTE: This case should not be possible if the ID comes from a valid JWT,
+	// but we'll handle it anyway. (If error is exposed to the client, this could
+	// help some kind of attack).
 	if updated == 0 {
 		return pedalea.ErrUserNotFound
 	}
@@ -59,7 +63,7 @@ func (r *UserRepository) UpdateUser(ID int, data pedalea.UserData) error {
 
 func (r *UserRepository) GetUserByID(ID int) (*pedalea.User, error) {
 	user := pedalea.User{}
-	err := r.db.Get(&user, "SELECT id, email, first_name, last_name, hashed_password, created_at, updated_at FROM users WHERE id = $2", ID)
+	err := r.db.Get(&user, "SELECT id, email, first_name, last_name, hashed_password, created_at, updated_at FROM users WHERE id = $1", ID)
 
 	if isNotFound(err) {
 		return nil, pedalea.ErrUserNotFound
