@@ -53,10 +53,12 @@ func (s *Service) StartRental(ID int, event pedalea.StartRental) error {
 		return err
 	}
 
+	// Also: Partial updates are not handled for the moment being
 	err = s.bikeRepo.UpdateBike(event.BikeID, pedalea.BikeData{
-		Available: false,
-		Latitude:  bike.Latitude,
-		Longitude: bike.Longitude,
+		Available:      false,
+		PricePerMinute: bike.PricePerMinute,
+		Latitude:       bike.Latitude,
+		Longitude:      bike.Longitude,
 	})
 	if err != nil {
 		return err
@@ -104,9 +106,10 @@ func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
 	}
 
 	err = s.bikeRepo.UpdateBike(rental.BikeID, pedalea.BikeData{
-		Available: true,
-		Latitude:  event.EndLatitude,
-		Longitude: event.EndLongitude,
+		Available:      true,
+		PricePerMinute: bike.PricePerMinute,
+		Latitude:       event.EndLatitude,
+		Longitude:      event.EndLongitude,
 	})
 
 	if err != nil {
@@ -118,12 +121,15 @@ func (s *Service) EndRental(UserID int, event pedalea.EndRental) error {
 	duration := int(math.Ceil(float64(curr_time-rental.StartTime) / 60.))
 
 	err = s.rentalRepo.UpdateRental(rental.ID, pedalea.RentalData{
-		Status:       pedalea.StatusStopped,
-		EndTime:      &curr_time,
-		EndLatitude:  &event.EndLatitude,
-		EndLongitude: &event.EndLongitude,
-		Duration:     duration,
-		Cost:         duration * bike.PricePerMinute,
+		Status:         pedalea.StatusStopped,
+		StartTime:      rental.StartTime,
+		EndTime:        &curr_time,
+		StartLatitude:  rental.StartLatitude,
+		StartLongitude: rental.StartLongitude,
+		EndLatitude:    &event.EndLatitude,
+		EndLongitude:   &event.EndLongitude,
+		Duration:       duration,
+		Cost:           duration * bike.PricePerMinute,
 	})
 
 	return err

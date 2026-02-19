@@ -29,7 +29,7 @@ func (r *BikeRepository) InsertBike(bike pedalea.BikeData) error {
 
 func (r *BikeRepository) UpdateBike(ID int, data pedalea.BikeData) error {
 	res, err := r.db.Exec(
-		`UPDATE bikes SET is_available = COALESCE($1, is_available), latitude = COALESCE($2, latitude), longitude = COALESCE($3, longitude), price_per_minute = COALESCE($4, price_per_minute), updated_at = COALESCE($5, updated_at) WHERE id = $6`,
+		`UPDATE bikes SET is_available = $1, latitude = $2, longitude = $3, price_per_minute = $4, updated_at = $5 WHERE id = $6`,
 		data.Available,
 		data.Latitude,
 		data.Longitude,

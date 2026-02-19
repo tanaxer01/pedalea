@@ -18,9 +18,9 @@ func NewRentalRepository(db *sqlx.DB) *RentalRepository {
 func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
 	_, err := r.db.NamedExec(
 		`INSERT INTO rentals (
-			user_id, bike_id, start_time, start_latitude, start_longitude, duration, cost
+			user_id, bike_id, start_time, start_latitude, start_longitude
 		) VALUES (
-			:user_id, :bike_id, :start_time, :start_latitude, :start_longitude, :duration, :cost
+			:user_id, :bike_id, :start_time, :start_latitude, :start_longitude
 		)`, data)
 
 	if isDuplicated(err) {
@@ -35,16 +35,16 @@ func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
 func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
 	res, err := r.db.Exec(
 		`UPDATE rentals
-		 SET status = COALESCE($1, status),
-				 start_time = COALESCE($2, start_time),
-				 end_time = COALESCE($3, end_time),
-				 start_latitude = COALESCE($4, start_latitude),
-				 start_longitude = COALESCE($5, start_longitude),
-				 end_latitude = COALESCE($6, end_latitude),
-				 end_longitude = COALESCE($7, end_longitude),
-				 duration = COALESCE($8, duration),
-				 cost = COALESCE($9, cost),
-				 updated_at = COALESCE($10, updated_at)
+		 SET status = $1,
+				 start_time = $2,
+				 end_time = $3,
+				 start_latitude = $4,
+				 start_longitude = $5,
+				 end_latitude = $6,
+				 end_longitude = $7,
+				 duration = $8,
+				 cost = $9,
+				 updated_at = $10
 			WHERE id = $11`,
 		data.Status,
 		data.StartTime,
