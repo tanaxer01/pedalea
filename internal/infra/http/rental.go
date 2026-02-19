@@ -33,25 +33,25 @@ func NewRentalHandler(service *rental.Service) *RentalHandler {
 func (h *RentalHandler) StartRental(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
+		utils.WriteError(w, r, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
 		return
 	}
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.StartRental](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.StartRental(intId, input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -74,25 +74,25 @@ func (h *RentalHandler) StartRental(w http.ResponseWriter, r *http.Request) {
 func (h *RentalHandler) EndRental(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
+		utils.WriteError(w, r, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
 		return
 	}
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.EndRental](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.EndRental(intId, input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -112,19 +112,19 @@ func (h *RentalHandler) EndRental(w http.ResponseWriter, r *http.Request) {
 func (h *RentalHandler) ListUserRentals(w http.ResponseWriter, r *http.Request) {
 	id, ok := r.Context().Value("UserID").(string)
 	if !ok {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
+		utils.WriteError(w, r, http.StatusInternalServerError, pedalea.ErrInvalidJwtSubject)
 		return
 	}
 
 	intId, err := strconv.Atoi(id)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
 	rentals, err := h.service.ListRentals(intId)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 

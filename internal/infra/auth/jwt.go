@@ -2,9 +2,11 @@ package auth
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/httplog/v3"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
@@ -54,5 +56,8 @@ func (a *JwtAuth) ValidateToken(request *http.Request, tokenType, tokenString st
 	}
 
 	ctx := context.WithValue(request.Context(), "UserID", subject)
+	httplog.SetAttrs(ctx, slog.String("userID", subject))
+	httplog.SetAttrs(ctx, slog.Bool("isAdmin", false))
+
 	return request.WithContext(ctx), nil
 }

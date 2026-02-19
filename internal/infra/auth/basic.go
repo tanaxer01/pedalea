@@ -1,9 +1,11 @@
 package auth
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 
+	"github.com/go-chi/httplog/v3"
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
 )
 
@@ -24,5 +26,8 @@ func (a *BasicAuth) ValidateToken(request *http.Request, tokenType, tokenString 
 		return nil, pedalea.ErrInvalidTokenCredentials
 	}
 
-	return request, nil
+	ctx := request.Context()
+	httplog.SetAttrs(ctx, slog.Bool("isAdmin", true))
+
+	return request.WithContext(ctx), nil
 }

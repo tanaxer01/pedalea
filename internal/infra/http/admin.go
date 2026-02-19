@@ -35,13 +35,13 @@ func NewAdminHandler(service *admin.Service) *AdminHandler {
 func (h *AdminHandler) InsertBike(w http.ResponseWriter, r *http.Request) {
 	input, err := utils.ValidateBody[pedalea.BikeData](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.InsertBike(input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -66,19 +66,19 @@ func (h *AdminHandler) UpdateBike(w http.ResponseWriter, r *http.Request) {
 	bikeID := chi.URLParam(r, "bike_id")
 	ID, err := strconv.Atoi(bikeID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.BikeData](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.UpdateBike(ID, input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -98,7 +98,7 @@ func (h *AdminHandler) UpdateBike(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) ListBikes(w http.ResponseWriter, r *http.Request) {
 	bikes, err := h.service.ListBikes()
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 	}
 
 	utils.WriteResponse(w, bikes)
@@ -123,19 +123,19 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
 	ID, err := strconv.Atoi(userID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.UserData](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.UpdateUser(ID, input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -155,7 +155,7 @@ func (h *AdminHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) ListUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := h.service.ListUsers()
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 	}
 
 	utils.WriteResponse(w, users)
@@ -177,13 +177,13 @@ func (h *AdminHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID := chi.URLParam(r, "user_id")
 	ID, err := strconv.Atoi(userID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	user, err := h.service.GetUserData(ID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -209,19 +209,19 @@ func (h *AdminHandler) UpdateRental(w http.ResponseWriter, r *http.Request) {
 	rentalID := chi.URLParam(r, "rental_id")
 	ID, err := strconv.Atoi(rentalID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	input, err := utils.ValidateBody[pedalea.RentalData](r.Body)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	err = h.service.UpdateRental(ID, input)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 
@@ -241,7 +241,7 @@ func (h *AdminHandler) UpdateRental(w http.ResponseWriter, r *http.Request) {
 func (h *AdminHandler) ListRentals(w http.ResponseWriter, r *http.Request) {
 	rentals, err := h.service.ListRentals()
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 	}
 
 	utils.WriteResponse(w, rentals)
@@ -263,13 +263,13 @@ func (h *AdminHandler) GetRental(w http.ResponseWriter, r *http.Request) {
 	rentalID := chi.URLParam(r, "rental_id")
 	ID, err := strconv.Atoi(rentalID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusBadRequest, err)
+		utils.WriteError(w, r, http.StatusBadRequest, err)
 		return
 	}
 
 	rental, err := h.service.GetRentalData(ID)
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 		return
 	}
 

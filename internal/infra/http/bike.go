@@ -28,7 +28,7 @@ func NewBikeHandler(service *bike.Service) *BikeHandler {
 func (h *BikeHandler) ListAvailableBikes(w http.ResponseWriter, r *http.Request) {
 	bikes, err := h.service.ListAvailableBikes()
 	if err != nil {
-		utils.WriteErrorResponse(w, http.StatusInternalServerError, err)
+		utils.WriteError(w, r, http.StatusInternalServerError, err)
 	}
 
 	utils.WriteResponse(w, bikes)

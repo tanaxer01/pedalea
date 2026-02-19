@@ -24,22 +24,22 @@ func (m *AuthMiddleware) AuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidTokenCredentials)
+			utils.WriteError(w, r, http.StatusUnauthorized, pedalea.ErrInvalidTokenCredentials)
 			return
 		}
 
 		tokenParts := strings.Split(authHeader, " ")
 		if len(tokenParts) != 2 {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, pedalea.ErrInvalidTokenFormat)
+			utils.WriteError(w, r, http.StatusUnauthorized, pedalea.ErrInvalidTokenFormat)
 			return
 		}
 
-		r, err := m.auth.ValidateToken(r, tokenParts[0], tokenParts[1])
+		validReq, err := m.auth.ValidateToken(r, tokenParts[0], tokenParts[1])
 		if err != nil {
-			utils.WriteErrorResponse(w, http.StatusUnauthorized, err)
+			utils.WriteError(w, r, http.StatusUnauthorized, err)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, validReq)
 	})
 }
