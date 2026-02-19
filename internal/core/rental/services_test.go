@@ -66,6 +66,39 @@ func TestRentalWithOverlappingBike(t *testing.T) {
 	rentalRepo.AssertExpectations(t)
 }
 
+func TestRentalWithConcurrencyOverlap(t *testing.T) {
+	bikeRepo := new(mocks.BikeRepo)
+	rentalRepo := new(mocks.RentalRepo)
+
+	rentalRepo.On("ListOverlappingRentals", 1, mock.Anything).Return([]pedalea.Rental{
+		{
+			ID: 1,
+			RentalData: pedalea.RentalData{
+				UserID: 10,
+				BikeID: 10,
+			},
+		},
+	}, nil)
+
+	bikeRepo.On("GetBikeByID", 1).Return(&pedalea.Bike{
+		ID: 1,
+		BikeData: pedalea.BikeData{
+			PricePerMinute: 10,
+		},
+	}, nil)
+
+	bikeRepo.On("UpdateBike", 1).Return(pedalea.ErrUserAlreadyRented)
+	rentalRepo.On("InsertRental", mock.Anything).Return(nil)
+
+	err := NewService(bikeRepo, rentalRepo).StartRental(1, pedalea.StartRental{
+		BikeID: 1,
+	})
+	require.ErrorIs(t, err, pedalea.ErrUserAlreadyRented)
+
+	bikeRepo.AssertExpectations(t)
+	rentalRepo.AssertExpectations(t)
+}
+
 func TestClosingRentalOutsideRange(t *testing.T) {
 	rentalRepo := new(mocks.RentalRepo)
 	bikeRepo := new(mocks.BikeRepo)

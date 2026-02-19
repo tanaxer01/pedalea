@@ -38,10 +38,20 @@ CREATE TABLE IF NOT EXISTS rentals (
 	FOREIGN KEY (user_id) REFERENCES users(id),
 	FOREIGN KEY (bike_id) REFERENCES bikes(id)
 );
+
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_running_user
+  ON rentals(user_id)
+  WHERE status = 'running';
+
+CREATE UNIQUE INDEX IF NOT EXISTS rentals_running_bike
+  ON rentals(bike_id)
+  WHERE status = 'running';
 -- +goose StatementEnd
 
 -- +goose Down
 -- +goose StatementBegin
+DROP INDEX IF EXISTS rentals_running_user;
+DROP INDEX IF EXISTS rentals_running_bike;
 DROP TABLE users;
 DROP TABLE bikes;
 DROP TABLE rentals;

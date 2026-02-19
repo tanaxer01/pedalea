@@ -1,6 +1,7 @@
 package sqlite
 
 import (
+	"strings"
 	"time"
 
 	"github.com/tanaxer01/pedalea/pkg/pedalea"
@@ -22,13 +23,22 @@ func (r *RentalRepository) InsertRental(data pedalea.RentalData) error {
 			:user_id, :bike_id, :start_time, :start_latitude, :start_longitude
 		)`, data)
 
-	if isDuplicated(err) {
-		return pedalea.ErrRentalAlreadyExists
-	} else if err != nil {
+	if err != nil {
+		if isDuplicated(err) {
+			msg := err.Error()
+			switch {
+			case strings.Contains(msg, "rentals_running_user"):
+				return pedalea.ErrUserAlreadyRented
+			case strings.Contains(msg, "rentals_running_bike"):
+				return pedalea.ErrBikeAlreadyRented
+			default:
+				return pedalea.ErrRentalAlreadyExists
+			}
+		}
 		return err
 	}
 
-	return err
+	return nil
 }
 
 func (r *RentalRepository) UpdateRental(ID int, data pedalea.RentalData) error {
